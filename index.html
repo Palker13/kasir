@@ -10,27 +10,9 @@
     <!-- Add jsPDF library for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Add Firebase SDK for cross-device synchronization -->
+    <!-- Add Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="KasirApp">
-<meta name="msapplication-TileImage" content="icon-192.png">
-<meta name="msapplication-TileColor" content="#1e40af">
-<meta name="theme-color" content="#1e40af">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(reg => console.log('SW registered: ', reg))
-        .catch(err => console.log('SW registration failed: ', err));
-    });
-  }
-</script>
 </head>
 <body class="bg-gradient-to-br from-blue-600 to-indigo-800 min-h-screen flex items-center justify-center font-[Inter]">
     <!-- Login Screen -->
@@ -785,12 +767,13 @@
     <script>
         // Firebase Configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDWCVjbQUiz9S-JI1RywR6gRPnkTwvZteE",
-            authDomain: "kasir-app-96531.firebaseapp.com",
-            projectId: "kasir-app-96531",
-            storageBucket: "kasir-app-96531.firebasestorage.app",
-            messagingSenderId: "801737538240",
-            appId: "1:801737538240:web:daab2677ff5f2872ce0b25"
+            apiKey: "AIzaSyDemoKeyForSimulatedFirebase",
+            authDomain: "demo-app.firebaseapp.com",
+            databaseURL: "https://demo-app.firebaseio.com",
+            projectId: "demo-app",
+            storageBucket: "demo-app.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890"
         };
 
         let firebaseInitialized = false;
@@ -917,16 +900,52 @@
         }
 
         // Initialize Firebase (simulated)
-       function initializeFirebase() {
+        function initializeFirebase() {
             if (firebaseInitialized) return;
             try {
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
+                database = {
+                    ref: function(path) {
+                        return {
+                            set: function(data) {
+                                return new Promise((resolve) => {
+                                    localStorage.setItem('firebase:' + path, JSON.stringify(data));
+                                    resolve();
+                                });
+                            },
+                            update: function(data) {
+                                return new Promise((resolve) => {
+                                    const existingData = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
+                                    const updatedData = { ...existingData, ...data };
+                                    localStorage.setItem('firebase:' + path, JSON.stringify(updatedData));
+                                    resolve();
+                                });
+                            },
+                            once: function(eventType) {
+                                return new Promise((resolve) => {
+                                    const data = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
+                                    resolve({
+                                        val: function() { return data; },
+                                        exists: function() { return Object.keys(data).length > 0; }
+                                    });
+                                });
+                            },
+                            on: function(eventType, callback) {
+                                const intervalId = setInterval(() => {
+                                    const data = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
+                                    callback({ val: function() { return data; } });
+                                }, 5000);
+                                return function() { clearInterval(intervalId); };
+                            },
+                            child: function(childPath) {
+                                return this.ref(path + '/' + childPath);
+                            }
+                        };
+                    }
+                };
                 firebaseInitialized = true;
-                console.log("Firebase initialized with real database");
             } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                showToast("Failed to connect to cloud", "error");
+                console.error('Error initializing Firebase:', error);
+                showToast('Error initializing cloud synchronization', 'error');
             }
         }
 
@@ -1003,9 +1022,7 @@
             if (!database) return;
             try {
                 const usersObj = {};
-                users.forEach(user => { 
-                    usersObj[user.id] = user; 
-                });
+                users.forEach(user => { usersObj[user.id] = user; });
                 await database.ref('users').set(usersObj);
                 localStorage.setItem('users', JSON.stringify(users));
                 lastSyncTime = Date.now();
@@ -1035,9 +1052,7 @@
             if (!database) return;
             try {
                 const productsObj = {};
-                products.forEach(product => { 
-                    productsObj[product.id] = product; 
-                });
+                products.forEach(product => { productsObj[product.id] = product; });
                 await database.ref('products').set(productsObj);
                 localStorage.setItem('products', JSON.stringify(products));
                 lastSyncTime = Date.now();
@@ -1788,6 +1803,22 @@
                 }
             });
         });
+
+        // Update product element in DOM
+        function updateProductElement(id, name, price, icon, color) {
+            const productItem = document.querySelector(`.product-item[data-id="${id}"]`);
+            if (productItem) {
+                productItem.dataset.name = name;
+                productItem.dataset.price = price;
+                productItem.querySelector('h5').textContent = name;
+                productItem.querySelector('p').textContent = formatCurrency(price);
+                const iconElement = productItem.querySelector('i');
+                if (iconElement) {
+                    iconElement.className = `fas fa-${icon} text-${color}-600 text-xl`;
+                }
+                productItem.querySelector('div').className = `w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mb-2`;
+            }
+        }
     </script>
 </body>
 </html>
