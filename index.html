@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add jsPDF library for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Add Firebase SDK for cross-device synchronization -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KasirApp">
+<meta name="msapplication-TileImage" content="icon-192.png">
+<meta name="msapplication-TileColor" content="#1e40af">
+<meta name="theme-color" content="#1e40af">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('SW registered: ', reg))
+        .catch(err => console.log('SW registration failed: ', err));
+    });
+  }
+</script>
+</head>
+<body class="bg-gradient-to-br from-blue-600 to-indigo-800 min-h-screen flex items-center justify-center font-[Inter]">
+    <!-- Login Screen -->
+    <div id="login-screen" class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Welcome <span class="text-blue-600">Back</span></h1>
+            <p class="text-gray-500 mt-2">Sign in to your account</p>
+        </div>
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <input type="text" id="username" name="username" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="password" name="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+            </div>
+            <div class="flex flex-col space-y-3">
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Sign in
+                </button>
+                <button type="button" id="register-btn" class="w-full flex justify-center py-2 px-4 border border-blue-600 rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Register
+                </button>
+            </div>
+            <div class="text-sm text-center text-gray-500">
+                <p>Demo credentials:</p>
+                <p>Username: demo / Password: password</p>
+            </div>
+        </form>
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="register-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Create Account</h2>
+                <button class="modal-close text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="register-form" class="space-y-4">
+                <div>
+                    <label for="reg-username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="reg-username" name="reg-username" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="reg-email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="reg-email" name="reg-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="reg-password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="reg-password" name="reg-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="reg-confirm-password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <input type="password" id="reg-confirm-password" name="reg-confirm-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboard-screen" class="hidden w-full min-h-screen bg-gray-100">
+        <div class="bg-white shadow">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center">
+                            <h1 class="text-xl font-bold text-blue-600">Dashboard</h1>
+                        </div>
+                        <nav class="ml-6 flex space-x-8">
+                            <a href="#" id="nav-home" class="border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Home
+                            </a>
+                            <a href="#" id="nav-profile" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Profile
+                            </a>
+                            <a href="#" id="nav-settings" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Settings
+                            </a>
+                            <a href="#" id="nav-cashier" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Cashier
+                            </a>
+                        </nav>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="ml-3 relative">
+                            <div>
+                                <button id="user-menu-button" type="button" class="bg-white flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" aria-expanded="false" aria-haspopup="true">
+                                    <span class="sr-only">Open user menu</span>
+                                    <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <span id="user-initial" class="text-blue-600 font-medium">U</span>
+                                    </div>
+                                </button>
+                            </div>
+                            <div id="user-dropdown" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                                <a href="#" id="profile-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Your Profile</a>
+                                <a href="#" id="settings-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Settings</a>
+                                <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Sign out</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Home Section -->
+            <div id="home-section" class="px-4 py-6 sm:px-0">
+                <div class="border-4 border-dashed border-gray-200 rounded-lg p-6 h-auto flex flex-col items-center justify-center">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome to your Dashboard</h2>
+                    <p class="text-gray-600 text-center max-w-md mb-6">You've successfully logged in! This is your home dashboard where you can access all features.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-4xl">
+                        <div class="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow" id="analytics-card">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                                    <i class="fas fa-chart-line text-blue-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">Analytics</h3>
+                                    <p class="text-sm text-gray-500">View your statistics</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow" id="users-card">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
+                                    <i class="fas fa-users text-green-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">Users</h3>
+                                    <p class="text-sm text-gray-500">Manage your users</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow" id="settings-card">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                                    <i class="fas fa-cog text-purple-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">Settings</h3>
+                                    <p class="text-sm text-gray-500">Configure your account</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow" id="cashier-card">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 bg-amber-100 rounded-md p-3">
+                                    <i class="fas fa-cash-register text-amber-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">Cashier</h3>
+                                    <p class="text-sm text-gray-500">Open POS system</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profile-section" class="px-4 py-6 sm:px-0 hidden">
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">User Profile</h3>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Personal details and information</p>
+                    </div>
+                    <div class="border-t border-gray-200">
+                        <dl>
+                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500">Full name</dt>
+                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2" id="profile-name">Demo User</dd>
+                            </div>
+                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500">Username</dt>
+                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2" id="profile-username">demo</dd>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500">Email address</dt>
+                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2" id="profile-email">demo@example.com</dd>
+                            </div>
+                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500">Account created</dt>
+                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">January 1, 2023</dd>
+                            </div>
+                        </dl>
+                    </div>
+                    <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                        <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="edit-profile-btn">
+                            Edit Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="px-4 py-6 sm:px-0 hidden">
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Account Settings</h3>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Manage your preferences and security settings</p>
+                    </div>
+                    <div class="border-t border-gray-200">
+                        <form id="settings-form" class="divide-y divide-gray-200">
+                            <div class="px-4 py-5 space-y-4 sm:p-6">
+                                <div>
+                                    <h4 class="text-md font-medium text-gray-900">Notifications</h4>
+                                    <div class="mt-4 space-y-2">
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="email-notifications" name="email-notifications" type="checkbox" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded" checked>
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="email-notifications" class="font-medium text-gray-700">Email notifications</label>
+                                                <p class="text-gray-500">Get notified via email about account activity</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="marketing-emails" name="marketing-emails" type="checkbox" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded">
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="marketing-emails" class="font-medium text-gray-700">Marketing emails</label>
+                                                <p class="text-gray-500">Receive emails about new features and offers</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pt-6">
+                                    <h4 class="text-md font-medium text-gray-900">Privacy</h4>
+                                    <div class="mt-4 space-y-2">
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="public-profile" name="public-profile" type="checkbox" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded">
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="public-profile" class="font-medium text-gray-700">Public profile</label>
+                                                <p class="text-gray-500">Make your profile visible to other users</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pt-6">
+                                    <h4 class="text-md font-medium text-gray-900">Theme</h4>
+                                    <div class="mt-4">
+                                        <select id="theme-select" name="theme" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                            <option value="light">Light</option>
+                                            <option value="dark">Dark</option>
+                                            <option value="system">System Default</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pt-6">
+                                    <h4 class="text-md font-medium text-gray-900">Data Synchronization</h4>
+                                    <div class="mt-4 space-y-2">
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="sync-enabled" name="sync-enabled" type="checkbox" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded" checked>
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="sync-enabled" class="font-medium text-gray-700">Enable cloud synchronization</label>
+                                                <p class="text-gray-500">Keep your data synchronized across all devices</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-center mt-2">
+                                            <span class="text-sm text-gray-700">Last synced:</span>
+                                            <span id="last-synced" class="text-sm text-gray-500">Never</span>
+                                        </div>
+                                        <button type="button" id="force-sync-btn" class="mt-2 inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            <i class="fas fa-sync-alt mr-2"></i> Sync Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Save Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analytics-section" class="px-4 py-6 sm:px-0 hidden">
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Analytics Dashboard</h3>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500">View your performance metrics and statistics</p>
+                    </div>
+                    <div class="border-t border-gray-200 p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <h4 class="text-sm font-medium text-blue-800 uppercase tracking-wide">Total Views</h4>
+                                <p class="mt-1 text-3xl font-semibold text-blue-600">1,245</p>
+                                <p class="mt-1 text-sm text-blue-500">
+                                    <span class="text-green-500"><i class="fas fa-arrow-up"></i> 12%</span> from last month
+                                </p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <h4 class="text-sm font-medium text-green-800 uppercase tracking-wide">Engagement</h4>
+                                <p class="mt-1 text-3xl font-semibold text-green-600">87%</p>
+                                <p class="mt-1 text-sm text-green-500">
+                                    <span class="text-green-500"><i class="fas fa-arrow-up"></i> 3%</span> from last month
+                                </p>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <h4 class="text-sm font-medium text-purple-800 uppercase tracking-wide">Conversion</h4>
+                                <p class="mt-1 text-3xl font-semibold text-purple-600">5.2%</p>
+                                <p class="mt-1 text-sm text-purple-500">
+                                    <span class="text-red-500"><i class="fas fa-arrow-down"></i> 1%</span> from last month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-8 h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <p class="text-gray-500">Chart visualization would appear here</p>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="export-analytics-btn">
+                                <i class="fas fa-download mr-2"></i> Export Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div id="users-section" class="px-4 py-6 sm:px-0 hidden">
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">User Management</h3>
+                            <p class="mt-1 max-w-2xl text-sm text-gray-500">View and manage user accounts</p>
+                        </div>
+                        <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="add-user-btn">
+                            <i class="fas fa-plus mr-2"></i> Add User
+                        </button>
+                    </div>
+                    <div class="border-t border-gray-200">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="users-table-body">
+                                    <!-- User rows will be dynamically generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cashier Section -->
+            <div id="cashier-section" class="px-4 py-6 sm:px-0 hidden">
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Cashier System</h3>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Point of Sale Application</p>
+                    </div>
+                    <div class="border-t border-gray-200">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+                            <!-- Product Selection -->
+                            <div class="lg:col-span-2">
+                                <div class="mb-4">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h4 class="text-lg font-medium text-gray-900">Products</h4>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="relative">
+                                                <input type="text" id="product-search" placeholder="Search products..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <i class="fas fa-search text-gray-400"></i>
+                                                </div>
+                                            </div>
+                                            <button id="add-product-btn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                <i class="fas fa-plus mr-2"></i> Add Product
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="product-grid">
+                                        <!-- Product items will be dynamically generated -->
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Cart -->
+                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <h4 class="text-lg font-medium text-gray-900 mb-4">Current Order</h4>
+                                <div class="overflow-y-auto max-h-80 mb-4">
+                                    <table class="min-w-full divide-y divide-gray-200" id="cart-table">
+                                        <thead class="bg-gray-100">
+                                            <tr>
+                                                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                                <th scope="col" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                                                <th scope="col" class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                                <th scope="col" class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200" id="cart-items">
+                                            <!-- Cart items will be dynamically added here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="border-t border-gray-200 pt-4 space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-700">Subtotal:</span>
+                                        <span class="font-medium" id="subtotal">Rp 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-700">Discount:</span>
+                                        <div class="flex items-center">
+                                            <input type="number" id="discount-amount" step="1" class="w-24 px-2 py-1 text-right border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="0">
+                                            <button id="apply-discount-btn" class="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                Apply
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between text-lg font-bold">
+                                        <span>Total:</span>
+                                        <span id="total">Rp 0</span>
+                                    </div>
+                                </div>
+                                <div class="mt-6 space-y-3">
+                                    <button type="button" id="checkout-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <i class="fas fa-credit-card mr-2"></i> Checkout
+                                    </button>
+                                    <button type="button" id="clear-cart-btn" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <i class="fas fa-trash mr-2"></i> Clear Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="edit-profile-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Edit Profile</h2>
+                <button class="modal-close text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="edit-profile-form" class="space-y-4">
+                <div>
+                    <label for="edit-name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <input type="text" id="edit-name" name="edit-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" value="Demo User" required>
+                </div>
+                <div>
+                    <label for="edit-email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="edit-email" name="edit-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" value="demo@example.com" required>
+                </div>
+                <div>
+                    <label for="edit-password" class="block text-sm font-medium text-gray-700">New Password (leave blank to keep current)</label>
+                    <input type="password" id="edit-password" name="edit-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="edit-confirm-password" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                    <input type="password" id="edit-confirm-password" name="edit-confirm-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Complete Payment</h2>
+                <button class="modal-close text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-6">
+                <p class="text-gray-700 mb-2">Total Amount:</p>
+                <p class="text-3xl font-bold text-blue-600" id="payment-amount">Rp 0</p>
+            </div>
+            <form id="payment-form" class="space-y-4">
+                <div>
+                    <label for="payment-method" class="block text-sm font-medium text-gray-700">Payment Method</label>
+                    <select id="payment-method" name="payment-method" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="cash">Cash</option>
+                        <option value="card">Credit/Debit Card</option>
+                        <option value="digital">Digital Wallet</option>
+                    </select>
+                </div>
+                <div id="cash-payment" class="space-y-4">
+                    <div>
+                        <label for="cash-received" class="block text-sm font-medium text-gray-700">Cash Received</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" id="cash-received" name="cash-received" class="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="change-amount" class="block text-sm font-medium text-gray-700">Change</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="text" id="change-amount" name="change-amount" class="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Complete Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div id="receipt-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Receipt</h2>
+                <button class="modal-close text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="receipt-content" class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                <div class="text-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-900">Pelita X JEP</h3>
+                    <p class="text-gray-500">Jl. Sultan Agung 147 Bangorejo - Banyuwangi</p>
+                    <p class="text-gray-500">WA : 085335731700</p>
+                    <p class="text-gray-500" id="receipt-date">Date: 01/01/2023 12:00 PM</p>
+                </div>
+                <div class="border-t border-b border-gray-200 py-4 my-4">
+                    <div class="space-y-2" id="receipt-items">
+                        <!-- Receipt items will be added here -->
+                    </div>
+                </div>
+                <div class="space-y-1 text-right">
+                    <p class="text-gray-700">Subtotal: <span id="receipt-subtotal">Rp 0</span></p>
+                    <p class="text-gray-700">Discount: <span id="receipt-discount">Rp 0</span></p>
+                    <p class="text-lg font-bold">Total: <span id="receipt-total">Rp 0</span></p>
+                    <p class="text-gray-700 mt-2">Payment Method: <span id="receipt-payment-method">Cash</span></p>
+                    <p class="text-gray-700" id="receipt-cash-received">Cash Received: Rp 0</p>
+                    <p class="text-gray-700" id="receipt-change">Change: Rp 0</p>
+                </div>
+                <div class="text-center mt-6">
+                    <p class="text-gray-500">Thank you for your purchase!</p>
+                    <p class="text-gray-500">Transaction #<span id="receipt-transaction-id">12345</span></p>
+                </div>
+            </div>
+            <div class="flex justify-center">
+                <button type="button" id="print-receipt-btn" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-download mr-2"></i> Download Receipt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div id="edit-product-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800" id="product-modal-title">Edit Product</h2>
+                <button class="modal-close text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="edit-product-form" class="space-y-4">
+                <input type="hidden" id="edit-product-id">
+                <div>
+                    <label for="edit-product-name" class="block text-sm font-medium text-gray-700">Product Name</label>
+                    <input type="text" id="edit-product-name" name="edit-product-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="edit-product-price" class="block text-sm font-medium text-gray-700">Price (Rp)</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">Rp</span>
+                        </div>
+                        <input type="number" id="edit-product-price" name="edit-product-price" class="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="edit-product-icon" class="block text-sm font-medium text-gray-700">Icon</label>
+                    <select id="edit-product-icon" name="edit-product-icon" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="pencil">Pencil</option>
+                        <option value="pen">Pen</option>
+                        <option value="marker">Marker</option>
+                        <option value="eraser">Eraser</option>
+                        <option value="paperclip">Paperclip</option>
+                        <option value="sticky-note">Sticky Note</option>
+                        <option value="book">Notebook</option>
+                        <option value="clipboard">Clipboard</option>
+                        <option value="ruler">Ruler</option>
+                        <option value="scissors">Scissors</option>
+                        <option value="tape">Tape</option>
+                        <option value="folder">Folder</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="edit-product-color" class="block text-sm font-medium text-gray-700">Color Theme</label>
+                    <select id="edit-product-color" name="edit-product-color" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="amber">Amber</option>
+                        <option value="blue">Blue</option>
+                        <option value="green">Green</option>
+                        <option value="red">Red</option>
+                        <option value="purple">Purple</option>
+                        <option value="pink">Pink</option>
+                        <option value="orange">Orange</option>
+                        <option value="indigo">Indigo</option>
+                    </select>
+                </div>
+                <div class="pt-4 flex space-x-3">
+                    <button type="submit" class="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Save Product
+                    </button>
+                    <button type="button" id="delete-product-btn" class="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit User Modal -->
+    <div id="user-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800" id="user-modal-title">Add User</h2>
+                <button class="modal-close text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="user-form" class="space-y-4">
+                <input type="hidden" id="edit-user-id">
+                <div>
+                    <label for="user-name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <input type="text" id="user-name" name="user-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="user-username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="user-username" name="user-username" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="user-email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="user-email" name="user-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="user-password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="user-password" name="user-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1" id="password-hint">Leave blank to keep current password (when editing)</p>
+                </div>
+                <div>
+                    <label for="user-role" class="block text-sm font-medium text-gray-700">Role</label>
+                    <select id="user-role" name="user-role" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="Admin">Admin</option>
+                        <option value="User">User</option>
+                        <option value="Guest">Guest</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="user-status" class="block text-sm font-medium text-gray-700">Status</label>
+                    <select id="user-status" name="user-status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Suspended">Suspended</option>
+                    </select>
+                </div>
+                <div class="pt-4 flex space-x-3">
+                    <button type="submit" class="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="save-user-btn">
+                        Save User
+                    </button>
+                    <button type="button" id="delete-user-btn" class="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Confirm Deletion</h2>
+                <button class="modal-close text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-6">
+                <p class="text-gray-700" id="delete-confirm-message">Are you sure you want to delete this item?</p>
+            </div>
+            <div class="flex space-x-3">
+                <button type="button" class="flex-1 flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 modal-close">
+                    Cancel
+                </button>
+                <button type="button" id="confirm-delete-btn" class="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Status Modal -->
+    <div id="sync-status-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Synchronization Status</h2>
+                <button class="modal-close text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-6">
+                <div class="flex items-center justify-center mb-4">
+                    <div id="sync-spinner" class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+                <p class="text-gray-700 text-center" id="sync-status-message">Synchronizing data with cloud...</p>
+            </div>
+            <div class="flex justify-center">
+                <button type="button" class="modal-close inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemoKeyForSimulatedFirebase",
+            authDomain: "demo-app.firebaseapp.com",
+            databaseURL: "https://demo-app.firebaseio.com",
+            projectId: "demo-app",
+            storageBucket: "demo-app.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890"
+        };
+
+        let firebaseInitialized = false;
+        let database = null;
+        let syncEnabled = true;
+        let syncInterval = null;
+        let lastSyncTime = null;
+
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const registerModal = document.getElementById('register-modal');
+        const editProfileModal = document.getElementById('edit-profile-modal');
+        const paymentModal = document.getElementById('payment-modal');
+        const receiptModal = document.getElementById('receipt-modal');
+        const editProductModal = document.getElementById('edit-product-modal');
+        const userModal = document.getElementById('user-modal');
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+        const syncStatusModal = document.getElementById('sync-status-modal');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const settingsForm = document.getElementById('settings-form');
+        const editProfileForm = document.getElementById('edit-profile-form');
+        const paymentForm = document.getElementById('payment-form');
+        const editProductForm = document.getElementById('edit-product-form');
+        const userForm = document.getElementById('user-form');
+        const registerBtn = document.getElementById('register-btn');
+        const modalCloseButtons = document.querySelectorAll('.modal-close');
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdown = document.getElementById('user-dropdown');
+        const logoutButton = document.getElementById('logout-button');
+        const userInitial = document.getElementById('user-initial');
+        const toastContainer = document.getElementById('toast-container');
+        const usersTableBody = document.getElementById('users-table-body');
+        const syncEnabledCheckbox = document.getElementById('sync-enabled');
+        const lastSyncedElement = document.getElementById('last-synced');
+        const forceSyncBtn = document.getElementById('force-sync-btn');
+        const syncStatusMessage = document.getElementById('sync-status-message');
+
+        // Navigation elements
+        const navHome = document.getElementById('nav-home');
+        const navProfile = document.getElementById('nav-profile');
+        const navSettings = document.getElementById('nav-settings');
+        const navCashier = document.getElementById('nav-cashier');
+        const profileLink = document.getElementById('profile-link');
+        const settingsLink = document.getElementById('settings-link');
+
+        // Dashboard sections
+        const homeSection = document.getElementById('home-section');
+        const profileSection = document.getElementById('profile-section');
+        const settingsSection = document.getElementById('settings-section');
+        const analyticsSection = document.getElementById('analytics-section');
+        const usersSection = document.getElementById('users-section');
+        const cashierSection = document.getElementById('cashier-section');
+
+        // Dashboard cards
+        const analyticsCard = document.getElementById('analytics-card');
+        const usersCard = document.getElementById('users-card');
+        const settingsCard = document.getElementById('settings-card');
+        const cashierCard = document.getElementById('cashier-card');
+
+        // Buttons
+        const editProfileBtn = document.getElementById('edit-profile-btn');
+        const addUserBtn = document.getElementById('add-user-btn');
+        const exportAnalyticsBtn = document.getElementById('export-analytics-btn');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        const clearCartBtn = document.getElementById('clear-cart-btn');
+        const printReceiptBtn = document.getElementById('print-receipt-btn');
+        const addProductBtn = document.getElementById('add-product-btn');
+        const deleteProductBtn = document.getElementById('delete-product-btn');
+        const deleteUserBtn = document.getElementById('delete-user-btn');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const applyDiscountBtn = document.getElementById('apply-discount-btn');
+
+        // Cashier elements
+        const productGrid = document.getElementById('product-grid');
+        const cartItems = document.getElementById('cart-items');
+        const subtotalElement = document.getElementById('subtotal');
+        const discountInput = document.getElementById('discount-amount');
+        const totalElement = document.getElementById('total');
+        const productSearch = document.getElementById('product-search');
+        const cashReceived = document.getElementById('cash-received');
+        const changeAmount = document.getElementById('change-amount');
+        const paymentAmount = document.getElementById('payment-amount');
+        const paymentMethod = document.getElementById('payment-method');
+
+        // Sample users for demo
+        const defaultUsers = [
+            { id: '1', username: 'demo', password: 'password', email: 'demo@example.com', name: 'Demo User', role: 'Admin', status: 'Active', lastUpdated: Date.now() },
+            { id: '2', username: 'jane', password: 'password123', email: 'jane@example.com', name: 'Jane Smith', role: 'User', status: 'Active', lastUpdated: Date.now() }
+        ];
+
+        let users = [];
+
+        // Default products data
+        const defaultProducts = [
+            { id: '1', name: 'Coffee', price: 35000, icon: 'pencil', color: 'amber', lastUpdated: Date.now() },
+            { id: '2', name: 'Sandwich', price: 57500, icon: 'pen', color: 'green', lastUpdated: Date.now() },
+            { id: '3', name: 'Donut', price: 22500, icon: 'eraser', color: 'pink', lastUpdated: Date.now() },
+            { id: '4', name: 'Salad', price: 79500, icon: 'paperclip', color: 'green', lastUpdated: Date.now() },
+            { id: '5', name: 'Juice', price: 45000, icon: 'sticky-note', color: 'orange', lastUpdated: Date.now() },
+            { id: '6', name: 'Cake', price: 62500, icon: 'book', color: 'purple', lastUpdated: Date.now() }
+        ];
+
+        let products = [];
+        let cart = [];
+        let subtotal = 0;
+        let discount = 0;
+        let total = 0;
+
+        // Variables for delete confirmation
+        let deleteType = '';
+        let deleteId = '';
+        let deleteCallback = null;
+
+        // Generate a unique device ID
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('deviceId');
+            if (!deviceId) {
+                deviceId = 'device_' + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('deviceId', deviceId);
+            }
+            return deviceId;
+        }
+
+        // Initialize Firebase (simulated)
+        function initializeFirebase() {
+            if (firebaseInitialized) return;
+            try {
+                database = {
+                    ref: function(path) {
+                        return {
+                            set: function(data) {
+                                return new Promise((resolve) => {
+                                    localStorage.setItem('firebase:' + path, JSON.stringify(data));
+                                    resolve();
+                                });
+                            },
+                            update: function(data) {
+                                return new Promise((resolve) => {
+                                    const existingData = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
+                                    const updatedData = { ...existingData, ...data };
+                                    localStorage.setItem('firebase:' + path, JSON.stringify(updatedData));
+                                    resolve();
+                                });
+                            },
+                            once: function(eventType) {
+                                return new Promise((resolve) => {
+                                    const data = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
+                                    resolve({
+                                        val: function() { return data; },
+                                        exists: function() { return Object.keys(data).length > 0; }
+                                    });
+                                });
+                            },
+                            on: function(eventType, callback) {
+                                const intervalId = setInterval(() => {
+                                    const data = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
+                                    callback({ val: function() { return data; } });
+                                }, 5000);
+                                return function() { clearInterval(intervalId); };
+                            },
+                            child: function(childPath) {
+                                return this.ref(path + '/' + childPath);
+                            }
+                        };
+                    }
+                };
+                firebaseInitialized = true;
+            } catch (error) {
+                console.error('Error initializing Firebase:', error);
+                showToast('Error initializing cloud synchronization', 'error');
+            }
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+        }
+
+        // Format number
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `p-3 rounded-md shadow-lg text-white mb-2 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 
+                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+            }`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Load data from cloud
+        async function loadDataFromCloud() {
+            try {
+                await loadUsersFromCloud();
+                await loadProductsFromCloud();
+                renderProducts();
+                renderUsers();
+                lastSyncTime = Date.now();
+                updateLastSyncedTime();
+                showToast('Data loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error loading data from cloud:', error);
+                showToast('Error loading data from cloud', 'error');
+                loadFromLocalStorage();
+            }
+        }
+
+        // Load from localStorage as fallback
+        function loadFromLocalStorage() {
+            const savedUsers = localStorage.getItem('users');
+            if (savedUsers) users = JSON.parse(savedUsers);
+            else { users = [...defaultUsers]; localStorage.setItem('users', JSON.stringify(users)); }
+
+            const savedProducts = localStorage.getItem('products');
+            if (savedProducts) products = JSON.parse(savedProducts);
+            else { products = [...defaultProducts]; localStorage.setItem('products', JSON.stringify(products)); }
+
+            renderProducts();
+            renderUsers();
+            showToast('Data loaded from local storage', 'info');
+        }
+
+        // Load users from cloud
+        async function loadUsersFromCloud() {
+            if (!database) return;
+            try {
+                const snapshot = await database.ref('users').once('value');
+                if (snapshot.exists()) users = Object.values(snapshot.val());
+                else { users = [...defaultUsers]; await saveUsersToCloud(); }
+            } catch (error) {
+                console.error('Error loading users from cloud:', error);
+                throw error;
+            }
+        }
+
+        // Save users to cloud
+        async function saveUsersToCloud() {
+            if (!database) return;
+            try {
+                const usersObj = {};
+                users.forEach(user => { usersObj[user.id] = user; });
+                await database.ref('users').set(usersObj);
+                localStorage.setItem('users', JSON.stringify(users));
+                lastSyncTime = Date.now();
+                updateLastSyncedTime();
+            } catch (error) {
+                console.error('Error saving users to cloud:', error);
+                showToast('Error saving users to cloud', 'error');
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+        }
+
+        // Load products from cloud
+        async function loadProductsFromCloud() {
+            if (!database) return;
+            try {
+                const snapshot = await database.ref('products').once('value');
+                if (snapshot.exists()) products = Object.values(snapshot.val());
+                else { products = [...defaultProducts]; await saveProductsToCloud(); }
+            } catch (error) {
+                console.error('Error loading products from cloud:', error);
+                throw error;
+            }
+        }
+
+        // Save products to cloud
+        async function saveProductsToCloud() {
+            if (!database) return;
+            try {
+                const productsObj = {};
+                products.forEach(product => { productsObj[product.id] = product; });
+                await database.ref('products').set(productsObj);
+                localStorage.setItem('products', JSON.stringify(products));
+                lastSyncTime = Date.now();
+                updateLastSyncedTime();
+            } catch (error) {
+                console.error('Error saving products to cloud:', error);
+                showToast('Error saving products to cloud', 'error');
+                localStorage.setItem('products', JSON.stringify(products));
+            }
+        }
+
+        // Sync data with cloud
+        async function syncData() {
+            if (!database) return;
+            try {
+                const usersSnapshot = await database.ref('users').once('value');
+                const productsSnapshot = await database.ref('products').once('value');
+                const cloudUsers = usersSnapshot.exists() ? Object.values(usersSnapshot.val()) : [];
+                const cloudProducts = productsSnapshot.exists() ? Object.values(productsSnapshot.val()) : [];
+
+                // Merge users
+                const localUsersMap = {};
+                users.forEach(user => { localUsersMap[user.id] = user; });
+                cloudUsers.forEach(cloudUser => {
+                    const localUser = localUsersMap[cloudUser.id];
+                    if (localUser) {
+                        if (!localUser.lastUpdated || !cloudUser.lastUpdated || cloudUser.lastUpdated > localUser.lastUpdated) {
+                            localUsersMap[cloudUser.id] = cloudUser;
+                        }
+                    } else {
+                        localUsersMap[cloudUser.id] = cloudUser;
+                    }
+                });
+                users = Object.values(localUsersMap);
+
+                // Merge products
+                const localProductsMap = {};
+                products.forEach(product => { localProductsMap[product.id] = product; });
+                cloudProducts.forEach(cloudProduct => {
+                    const localProduct = localProductsMap[cloudProduct.id];
+                    if (localProduct) {
+                        if (!localProduct.lastUpdated || !cloudProduct.lastUpdated || cloudProduct.lastUpdated > localProduct.lastUpdated) {
+                            localProductsMap[cloudProduct.id] = cloudProduct;
+                        }
+                    } else {
+                        localProductsMap[cloudProduct.id] = cloudProduct;
+                    }
+                });
+                products = Object.values(localProductsMap);
+
+                await saveUsersToCloud();
+                await saveProductsToCloud();
+                renderUsers();
+                renderProducts();
+                lastSyncTime = Date.now();
+                updateLastSyncedTime();
+                return true;
+            } catch (error) {
+                console.error('Error syncing data:', error);
+                throw error;
+            }
+        }
+
+        // Setup sync interval
+        function setupSyncInterval() {
+            if (syncInterval) clearInterval(syncInterval);
+            syncEnabled = localStorage.getItem('syncEnabled') !== 'false';
+            syncEnabledCheckbox.checked = syncEnabled;
+            if (syncEnabled) {
+                syncInterval = setInterval(async () => {
+                    try { await syncData(); } catch (error) { console.error('Auto sync error:', error); }
+                }, 30000);
+            }
+            const lastSyncTimeStr = localStorage.getItem('lastSyncTime');
+            if (lastSyncTimeStr) {
+                lastSyncTime = parseInt(lastSyncTimeStr);
+                updateLastSyncedTime();
+            }
+        }
+
+        // Update last synced time display
+        function updateLastSyncedTime() {
+            if (lastSyncTime) {
+                const date = new Date(lastSyncTime);
+                lastSyncedElement.textContent = date.toLocaleString();
+                localStorage.setItem('lastSyncTime', lastSyncTime.toString());
+            } else {
+                lastSyncedElement.textContent = 'Never';
+            }
+        }
+
+        // Generate a unique user ID
+        function generateUserId() {
+            if (users.length === 0) return '1';
+            const highestId = Math.max(...users.map(u => parseInt(u.id)));
+            return (highestId + 1).toString();
+        }
+
+        // Generate a unique product ID
+        function generateProductId() {
+            if (products.length === 0) return '1';
+            const highestId = Math.max(...products.map(p => parseInt(p.id)));
+            return (highestId + 1).toString();
+        }
+
+        // Render users in the users table
+        function renderUsers() {
+            usersTableBody.innerHTML = '';
+            users.forEach(user => addUserRow(user));
+        }
+
+        // Add user row to table
+        function addUserRow(user) {
+            const row = document.createElement('tr');
+            let statusColor = 'green';
+            if (user.status === 'Inactive') statusColor = 'gray';
+            else if (user.status === 'Suspended') statusColor = 'red';
+            let roleColor = 'green';
+            if (user.role === 'User') roleColor = 'blue';
+            else if (user.role === 'Guest') roleColor = 'gray';
+            const initial = (user.name || user.username).charAt(0).toUpperCase();
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <span class="text-blue-600 font-medium">${initial}</span>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">${user.name || user.username}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${user.email}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${roleColor}-100 text-${roleColor}-800">${user.role}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800">${user.status}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button class="text-blue-600 hover:text-blue-900 mr-3 edit-user-btn" data-id="${user.id}">Edit</button>
+                    <button class="text-red-600 hover:text-red-900 delete-user-btn" data-id="${user.id}">Delete</button>
+                </td>
+            `;
+            usersTableBody.appendChild(row);
+            row.querySelector('.edit-user-btn').addEventListener('click', () => {
+                document.getElementById('user-modal-title').textContent = 'Edit User';
+                document.getElementById('edit-user-id').value = user.id;
+                document.getElementById('user-name').value = user.name || '';
+                document.getElementById('user-username').value = user.username;
+                document.getElementById('user-email').value = user.email;
+                document.getElementById('user-password').value = '';
+                document.getElementById('user-role').value = user.role;
+                document.getElementById('user-status').value = user.status;
+                document.getElementById('password-hint').textContent = 'Leave blank to keep current password';
+                deleteUserBtn.classList.remove('hidden');
+                userModal.classList.remove('hidden');
+            });
+            row.querySelector('.delete-user-btn').addEventListener('click', () => {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                if (currentUser && currentUser.id === user.id) {
+                    showToast('You cannot delete your own account while logged in', 'error');
+                    return;
+                }
+                document.getElementById('delete-confirm-message').textContent = `Are you sure you want to delete the user "${user.name || user.username}"?`;
+                deleteType = 'user';
+                deleteId = user.id;
+                deleteCallback = () => {
+                    users = users.filter(u => u.id !== user.id);
+                    saveUsersToCloud();
+                    renderUsers();
+                    deleteConfirmModal.classList.add('hidden');
+                    showToast('User deleted successfully', 'success');
+                };
+                deleteConfirmModal.classList.remove('hidden');
+            });
+        }
+
+        // Render products in the product grid
+        function renderProducts() {
+            productGrid.innerHTML = '';
+            products.forEach(product => addProductElement(product));
+        }
+
+        // Add product element to DOM
+        function addProductElement(product) {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'product-item bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow border border-gray-200';
+            productDiv.dataset.id = product.id;
+            productDiv.dataset.name = product.name;
+            productDiv.dataset.price = product.price;
+            productDiv.innerHTML = `
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 bg-${product.color}-100 rounded-full flex items-center justify-center mb-2">
+                        <i class="fas fa-${product.icon} text-${product.color}-600 text-xl"></i>
+                    </div>
+                    <h5 class="font-medium text-gray-900">${product.name}</h5>
+                    <p class="text-blue-600 font-semibold">${formatCurrency(product.price)}</p>
+                    <button class="edit-product-btn mt-2 text-xs text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-edit mr-1"></i> Edit
+                    </button>
+                </div>
+            `;
+            productGrid.appendChild(productDiv);
+            productDiv.addEventListener('click', (e) => {
+                if (e.target.closest('.edit-product-btn')) return;
+                const id = product.id;
+                const name = product.name;
+                const price = product.price;
+                const existingItem = cart.find(item => item.id === id);
+                if (existingItem) existingItem.quantity += 1;
+                else cart.push({ id, name, price, quantity: 1 });
+                updateCart();
+                showToast(`Added ${name} to cart`, 'success');
+            });
+            const editBtn = productDiv.querySelector('.edit-product-btn');
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('product-modal-title').textContent = 'Edit Product';
+                document.getElementById('edit-product-id').value = product.id;
+                document.getElementById('edit-product-name').value = product.name;
+                document.getElementById('edit-product-price').value = product.price;
+                document.getElementById('edit-product-icon').value = product.icon;
+                document.getElementById('edit-product-color').value = product.color;
+                deleteProductBtn.classList.remove('hidden');
+                editProductModal.classList.remove('hidden');
+            });
+        }
+
+        // Update cart
+        function updateCart() {
+            cartItems.innerHTML = '';
+            subtotal = 0;
+            if (cart.length === 0) {
+                cartItems.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-4 py-4 text-center text-gray-500">
+                            Cart is empty
+                        </td>
+                    </tr>
+                `;
+                subtotal = 0;
+                discount = 0;
+                discountInput.value = '0';
+                total = 0;
+                updateTotals();
+                return;
+            }
+            cart.forEach((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${item.name}</div>
+                        <div class="text-xs text-gray-500">${formatCurrency(item.price)} each</div>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-center">
+                        <div class="flex items-center justify-center">
+                            <button class="decrement-btn text-gray-500 hover:text-gray-700 px-1" data-index="${index}">-</button>
+                            <input type="number" min="1" value="${item.quantity}" class="quantity-input mx-1 w-12 text-center border border-gray-300 rounded">
+                            <button class="increment-btn text-gray-500 hover:text-gray-700 px-1" data-index="${index}">+</button>
+                        </div>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">${formatCurrency(itemTotal)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                        <button class="text-red-600 hover:text-red-900 remove-item-btn" data-index="${index}">Remove</button>
+                    </td>
+                `;
+                cartItems.appendChild(row);
+            });
+            updateTotals();
+        }
+
+        // Update totals
+        function updateTotals() {
+            total = subtotal - discount;
+            subtotalElement.textContent = formatCurrency(subtotal);
+            totalElement.textContent = formatCurrency(total);
+        }
+
+        // Generate receipt
+        function generateReceipt() {
+            const now = new Date();
+            document.getElementById('receipt-date').textContent = `Date: ${now.toLocaleString()}`;
+            const receiptItems = document.getElementById('receipt-items');
+            receiptItems.innerHTML = '';
+            cart.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex justify-between';
+                itemDiv.innerHTML = `<span>${item.name} x${item.quantity}</span><span>${formatCurrency(item.price * item.quantity)}</span>`;
+                receiptItems.appendChild(itemDiv);
+            });
+            document.getElementById('receipt-subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('receipt-discount').textContent = formatCurrency(discount);
+            document.getElementById('receipt-total').textContent = formatCurrency(total);
+            document.getElementById('receipt-payment-method').textContent = paymentMethod.value;
+            const received = parseFloat(cashReceived.value) || 0;
+            document.getElementById('receipt-cash-received').textContent = `Cash Received: ${formatCurrency(received)}`;
+            document.getElementById('receipt-change').textContent = `Change: ${formatCurrency(received - total)}`;
+            document.getElementById('receipt-transaction-id').textContent = 'TX' + Date.now().toString().slice(-5);
+        }
+
+        // Generate PDF receipt
+        function generatePDFReceipt() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            html2canvas(document.getElementById('receipt-content')).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 180;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                doc.addImage(imgData, 'PNG', 15, 10, imgWidth, imgHeight);
+                doc.save('receipt.pdf');
+            });
+        }
+
+        // Show dashboard
+        function showDashboard(user) {
+            loginScreen.classList.add('hidden');
+            dashboardScreen.classList.remove('hidden');
+            userInitial.textContent = (user.name || user.username).charAt(0).toUpperCase();
+            document.getElementById('profile-name').textContent = user.name || user.username;
+            document.getElementById('profile-username').textContent = user.username;
+            document.getElementById('profile-email').textContent = user.email;
+            showSection(homeSection);
+            setActiveNav(navHome);
+        }
+
+        // Show section
+        function showSection(section) {
+            [homeSection, profileSection, settingsSection, analyticsSection, usersSection, cashierSection].forEach(s => s.classList.add('hidden'));
+            section.classList.remove('hidden');
+        }
+
+        // Set active navigation
+        function setActiveNav(activeNav) {
+            [navHome, navProfile, navSettings, navCashier].forEach(nav => {
+                nav.classList.remove('border-blue-500', 'text-gray-900');
+                nav.classList.add('border-transparent', 'text-gray-500');
+            });
+            if (activeNav) {
+                activeNav.classList.remove('border-transparent', 'text-gray-500');
+                activeNav.classList.add('border-blue-500', 'text-gray-900');
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+            loadDataFromCloud();
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (currentUser) showDashboard(currentUser);
+            setupSyncInterval();
+
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const user = users.find(u => u.username === username && u.password === password);
+                if (user) {
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    showDashboard(user);
+                    showToast('Login successful!', 'success');
+                } else {
+                    showToast('Invalid username or password', 'error');
+                }
+            });
+
+            registerBtn.addEventListener('click', () => registerModal.classList.remove('hidden'));
+
+            modalCloseButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    [registerModal, editProfileModal, paymentModal, receiptModal, editProductModal, userModal, deleteConfirmModal, syncStatusModal].forEach(modal => modal.classList.add('hidden'));
+                });
+            });
+
+            registerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('reg-username').value;
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+                const confirmPassword = document.getElementById('reg-confirm-password').value;
+                if (password !== confirmPassword) {
+                    showToast('Passwords do not match', 'error');
+                    return;
+                }
+                if (users.some(u => u.username === username)) {
+                    showToast('Username already exists', 'error');
+                    return;
+                }
+                const newUser = { 
+                    id: generateUserId(),
+                    username, 
+                    password, 
+                    email, 
+                    name: username,
+                    role: 'User',
+                    status: 'Active',
+                    lastUpdated: Date.now()
+                };
+                users.push(newUser);
+                saveUsersToCloud();
+                localStorage.setItem('currentUser', JSON.stringify(newUser));
+                registerModal.classList.add('hidden');
+                showDashboard(newUser);
+                showToast('Registration successful!', 'success');
+            });
+
+            userMenuButton.addEventListener('click', () => userDropdown.classList.toggle('hidden'));
+            document.addEventListener('click', (e) => {
+                if (!userMenuButton.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('currentUser');
+                dashboardScreen.classList.add('hidden');
+                loginScreen.classList.remove('hidden');
+                loginForm.reset();
+                showToast('Logged out successfully', 'info');
+            });
+
+            navHome.addEventListener('click', (e) => { e.preventDefault(); showSection(homeSection); setActiveNav(navHome); });
+            navProfile.addEventListener('click', (e) => { e.preventDefault(); showSection(profileSection); setActiveNav(navProfile); });
+            navSettings.addEventListener('click', (e) => { e.preventDefault(); showSection(settingsSection); setActiveNav(navSettings); });
+            navCashier.addEventListener('click', (e) => { e.preventDefault(); showSection(cashierSection); setActiveNav(navCashier); });
+            profileLink.addEventListener('click', (e) => { e.preventDefault(); showSection(profileSection); setActiveNav(navProfile); userDropdown.classList.add('hidden'); });
+            settingsLink.addEventListener('click', (e) => { e.preventDefault(); showSection(settingsSection); setActiveNav(navSettings); userDropdown.classList.add('hidden'); });
+
+            analyticsCard.addEventListener('click', () => showSection(analyticsSection));
+            usersCard.addEventListener('click', () => showSection(usersSection));
+            settingsCard.addEventListener('click', () => showSection(settingsSection));
+            cashierCard.addEventListener('click', () => showSection(cashierSection));
+
+            editProfileBtn.addEventListener('click', () => {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                document.getElementById('edit-name').value = currentUser.name || '';
+                document.getElementById('edit-email').value = currentUser.email || '';
+                editProfileModal.classList.remove('hidden');
+            });
+
+            editProfileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('edit-name').value;
+                const email = document.getElementById('edit-email').value;
+                const password = document.getElementById('edit-password').value;
+                const confirmPassword = document.getElementById('edit-confirm-password').value;
+                if (password && password !== confirmPassword) {
+                    showToast('Passwords do not match', 'error');
+                    return;
+                }
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                currentUser.name = name;
+                currentUser.email = email;
+                currentUser.lastUpdated = Date.now();
+                if (password) currentUser.password = password;
+                const userIndex = users.findIndex(u => u.id === currentUser.id);
+                if (userIndex !== -1) {
+                    users[userIndex] = currentUser;
+                    saveUsersToCloud();
+                }
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                document.getElementById('profile-name').textContent = name;
+                document.getElementById('profile-email').textContent = email;
+                userInitial.textContent = name.charAt(0).toUpperCase();
+                editProfileModal.classList.add('hidden');
+                showToast('Profile updated successfully', 'success');
+            });
+
+            settingsForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                syncEnabled = syncEnabledCheckbox.checked;
+                localStorage.setItem('syncEnabled', syncEnabled);
+                if (syncEnabled) setupSyncInterval();
+                else clearInterval(syncInterval);
+                showToast('Settings saved successfully', 'success');
+            });
+
+            syncEnabledCheckbox.addEventListener('change', () => {
+                syncEnabled = syncEnabledCheckbox.checked;
+                localStorage.setItem('syncEnabled', syncEnabled);
+                if (syncEnabled) {
+                    setupSyncInterval();
+                    showToast('Cloud synchronization enabled', 'info');
+                } else {
+                    clearInterval(syncInterval);
+                    showToast('Cloud synchronization disabled', 'info');
+                }
+            });
+
+            forceSyncBtn.addEventListener('click', () => {
+                syncStatusModal.classList.remove('hidden');
+                syncStatusMessage.textContent = 'Synchronizing data with cloud...';
+                syncData().then(() => {
+                    syncStatusMessage.textContent = 'Synchronization completed successfully!';
+                    document.getElementById('sync-spinner').classList.remove('animate-spin');
+                    setTimeout(() => {
+                        syncStatusModal.classList.add('hidden');
+                        document.getElementById('sync-spinner').classList.add('animate-spin');
+                    }, 2000);
+                }).catch(error => {
+                    syncStatusMessage.textContent = 'Synchronization failed. Please try again.';
+                    document.getElementById('sync-spinner').classList.remove('animate-spin');
+                    console.error('Sync error:', error);
+                });
+            });
+
+            addUserBtn.addEventListener('click', () => {
+                document.getElementById('user-modal-title').textContent = 'Add New User';
+                document.getElementById('edit-user-id').value = '';
+                document.getElementById('user-name').value = '';
+                document.getElementById('user-username').value = '';
+                document.getElementById('user-email').value = '';
+                document.getElementById('user-password').value = '';
+                document.getElementById('user-role').value = 'User';
+                document.getElementById('user-status').value = 'Active';
+                document.getElementById('password-hint').textContent = 'Password is required for new users';
+                deleteUserBtn.classList.add('hidden');
+                userModal.classList.remove('hidden');
+            });
+
+            userForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const userId = document.getElementById('edit-user-id').value;
+                const name = document.getElementById('user-name').value;
+                const username = document.getElementById('user-username').value;
+                const email = document.getElementById('user-email').value;
+                const password = document.getElementById('user-password').value;
+                const role = document.getElementById('user-role').value;
+                const status = document.getElementById('user-status').value;
+                const existingUser = users.find(u => u.username === username && u.id !== userId);
+                if (existingUser) {
+                    showToast('Username already exists', 'error');
+                    return;
+                }
+                if (userId) {
+                    const userIndex = users.findIndex(u => u.id === userId);
+                    if (userIndex !== -1) {
+                        const updatedUser = { ...users[userIndex], name, username, email, role, status, lastUpdated: Date.now() };
+                        if (password) updatedUser.password = password;
+                        users[userIndex] = updatedUser;
+                        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                        if (currentUser && currentUser.id === userId) {
+                            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                            document.getElementById('profile-name').textContent = name;
+                            document.getElementById('profile-username').textContent = username;
+                            document.getElementById('profile-email').textContent = email;
+                            userInitial.textContent = name.charAt(0).toUpperCase();
+                        }
+                        showToast('User updated successfully', 'success');
+                    }
+                } else {
+                    if (!password) {
+                        showToast('Password is required for new users', 'error');
+                        return;
+                    }
+                    const newUser = { id: generateUserId(), name, username, email, password, role, status, lastUpdated: Date.now() };
+                    users.push(newUser);
+                    showToast('User added successfully', 'success');
+                }
+                saveUsersToCloud();
+                renderUsers();
+                userModal.classList.add('hidden');
+            });
+
+            deleteUserBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const userId = document.getElementById('edit-user-id').value;
+                const userName = document.getElementById('user-name').value;
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                if (currentUser && currentUser.id === userId) {
+                    showToast('You cannot delete your own account while logged in', 'error');
+                    return;
+                }
+                document.getElementById('delete-confirm-message').textContent = `Are you sure you want to delete the user "${userName}"?`;
+                deleteType = 'user';
+                deleteId = userId;
+                deleteCallback = () => {
+                    users = users.filter(u => u.id !== userId);
+                    saveUsersToCloud();
+                    renderUsers();
+                    userModal.classList.add('hidden');
+                    deleteConfirmModal.classList.add('hidden');
+                    showToast('User deleted successfully', 'success');
+                };
+                deleteConfirmModal.classList.remove('hidden');
+            });
+
+            confirmDeleteBtn.addEventListener('click', () => {
+                if (deleteCallback) deleteCallback();
+            });
+
+            exportAnalyticsBtn.addEventListener('click', () => showToast('Analytics data would be exported here', 'info'));
+
+            productSearch.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('.product-item').forEach(item => {
+                    const name = item.querySelector('h5').textContent.toLowerCase();
+                    item.classList.toggle('hidden', !name.includes(searchTerm));
+                });
+            });
+
+            applyDiscountBtn.addEventListener('click', () => {
+                const discountValue = parseFloat(discountInput.value) || 0;
+                if (discountValue < 0) {
+                    showToast('Discount cannot be negative', 'error');
+                    discountInput.value = '0';
+                    return;
+                }
+                if (discountValue > subtotal) {
+                    showToast('Discount cannot be greater than subtotal', 'error');
+                    discountInput.value = subtotal.toString();
+                    discount = subtotal;
+                } else {
+                    discount = discountValue;
+                }
+                updateTotals();
+                showToast(`Discount of ${formatCurrency(discount)} applied`, 'success');
+            });
+
+            clearCartBtn.addEventListener('click', () => {
+                if (cart.length === 0) {
+                    showToast('Cart is already empty', 'info');
+                    return;
+                }
+                if (confirm('Are you sure you want to clear the cart?')) {
+                    cart = [];
+                    updateCart();
+                    showToast('Cart cleared', 'info');
+                }
+            });
+
+            checkoutBtn.addEventListener('click', () => {
+                if (cart.length === 0) {
+                    showToast('Add items to cart before checkout', 'warning');
+                    return;
+                }
+                paymentAmount.textContent = formatCurrency(total);
+                paymentModal.classList.remove('hidden');
+            });
+
+            paymentMethod.addEventListener('change', () => {
+                document.getElementById('cash-payment').classList.toggle('hidden', paymentMethod.value !== 'cash');
+            });
+
+            paymentForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const method = paymentMethod.value;
+                if (method === 'cash') {
+                    const received = parseFloat(cashReceived.value) || 0;
+                    if (received < total) {
+                        showToast('Insufficient payment amount', 'error');
+                        return;
+                    }
+                    changeAmount.value = formatCurrency(received - total);
+                }
+                generateReceipt();
+                paymentModal.classList.add('hidden');
+                receiptModal.classList.remove('hidden');
+                cart = [];
+                updateCart();
+            });
+
+            printReceiptBtn.addEventListener('click', () => generatePDFReceipt());
+
+            addProductBtn.addEventListener('click', () => {
+                document.getElementById('product-modal-title').textContent = 'Add New Product';
+                document.getElementById('edit-product-id').value = '';
+                document.getElementById('edit-product-name').value = '';
+                document.getElementById('edit-product-price').value = '';
+                document.getElementById('edit-product-icon').value = 'pencil';
+                document.getElementById('edit-product-color').value = 'blue';
+                deleteProductBtn.classList.add('hidden');
+                editProductModal.classList.remove('hidden');
+            });
+
+            deleteProductBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const productId = document.getElementById('edit-product-id').value;
+                const productName = document.getElementById('edit-product-name').value;
+                document.getElementById('delete-confirm-message').textContent = `Are you sure you want to delete the product "${productName}"?`;
+                deleteType = 'product';
+                deleteId = productId;
+                deleteCallback = () => {
+                    products = products.filter(p => p.id !== productId);
+                    saveProductsToCloud();
+                    const productElement = document.querySelector(`.product-item[data-id="${productId}"]`);
+                    if (productElement) productElement.remove();
+                    editProductModal.classList.add('hidden');
+                    deleteConfirmModal.classList.add('hidden');
+                    showToast('Product deleted successfully', 'success');
+                };
+                deleteConfirmModal.classList.remove('hidden');
+            });
+
+            editProductForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const productId = document.getElementById('edit-product-id').value;
+                const name = document.getElementById('edit-product-name').value;
+                const price = parseFloat(document.getElementById('edit-product-price').value);
+                const icon = document.getElementById('edit-product-icon').value;
+                const color = document.getElementById('edit-product-color').value;
+                if (productId) {
+                    const productIndex = products.findIndex(p => p.id === productId);
+                    if (productIndex !== -1) {
+                        products[productIndex] = { id: productId, name, price, icon, color, lastUpdated: Date.now() };
+                        updateProductElement(productId, name, price, icon, color);
+                        showToast('Product updated successfully', 'success');
+                    }
+                } else {
+                    const newId = generateProductId();
+                    const newProduct = { id: newId, name, price, icon, color, lastUpdated: Date.now() };
+                    products.push(newProduct);
+                    addProductElement(newProduct);
+                    showToast('Product added successfully', 'success');
+                }
+                saveProductsToCloud();
+                editProductModal.classList.add('hidden');
+            });
+
+            // Quantity controls in cart
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('decrement-btn')) {
+                    const index = e.target.dataset.index;
+                    if (cart[index].quantity > 1) cart[index].quantity--;
+                    else cart.splice(index, 1);
+                    updateCart();
+                } else if (e.target.classList.contains('increment-btn')) {
+                    const index = e.target.dataset.index;
+                    cart[index].quantity++;
+                    updateCart();
+                } else if (e.target.classList.contains('remove-item-btn')) {
+                    const index = e.target.dataset.index;
+                    cart.splice(index, 1);
+                    updateCart();
+                }
+            });
+
+            // Update cart on quantity input change
+            document.addEventListener('input', (e) => {
+                if (e.target.classList.contains('quantity-input')) {
+                    const index = Array.from(document.querySelectorAll('.quantity-input')).indexOf(e.target);
+                    const value = parseInt(e.target.value) || 1;
+                    cart[index].quantity = value;
+                    updateCart();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
