@@ -917,52 +917,16 @@
         }
 
         // Initialize Firebase (simulated)
-        function initializeFirebase() {
+       function initializeFirebase() {
             if (firebaseInitialized) return;
             try {
-                database = {
-                    ref: function(path) {
-                        return {
-                            set: function(data) {
-                                return new Promise((resolve) => {
-                                    localStorage.setItem('firebase:' + path, JSON.stringify(data));
-                                    resolve();
-                                });
-                            },
-                            update: function(data) {
-                                return new Promise((resolve) => {
-                                    const existingData = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
-                                    const updatedData = { ...existingData, ...data };
-                                    localStorage.setItem('firebase:' + path, JSON.stringify(updatedData));
-                                    resolve();
-                                });
-                            },
-                            once: function(eventType) {
-                                return new Promise((resolve) => {
-                                    const data = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
-                                    resolve({
-                                        val: function() { return data; },
-                                        exists: function() { return Object.keys(data).length > 0; }
-                                    });
-                                });
-                            },
-                            on: function(eventType, callback) {
-                                const intervalId = setInterval(() => {
-                                    const data = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
-                                    callback({ val: function() { return data; } });
-                                }, 5000);
-                                return function() { clearInterval(intervalId); };
-                            },
-                            child: function(childPath) {
-                                return this.ref(path + '/' + childPath);
-                            }
-                        };
-                    }
-                };
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
                 firebaseInitialized = true;
+                console.log("Firebase initialized with real database");
             } catch (error) {
-                console.error('Error initializing Firebase:', error);
-                showToast('Error initializing cloud synchronization', 'error');
+                console.error("Error initializing Firebase:", error);
+                showToast("Failed to connect to cloud", "error");
             }
         }
 
@@ -1039,7 +1003,9 @@
             if (!database) return;
             try {
                 const usersObj = {};
-                users.forEach(user => { usersObj[user.id] = user; });
+                users.forEach(user => { 
+                    usersObj[user.id] = user; 
+                });
                 await database.ref('users').set(usersObj);
                 localStorage.setItem('users', JSON.stringify(users));
                 lastSyncTime = Date.now();
@@ -1069,7 +1035,9 @@
             if (!database) return;
             try {
                 const productsObj = {};
-                products.forEach(product => { productsObj[product.id] = product; });
+                products.forEach(product => { 
+                    productsObj[product.id] = product; 
+                });
                 await database.ref('products').set(productsObj);
                 localStorage.setItem('products', JSON.stringify(products));
                 lastSyncTime = Date.now();
