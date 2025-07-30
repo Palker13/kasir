@@ -1801,6 +1801,25 @@
                 productItem.querySelector('div').className = `w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mb-2`;
             }
         }
+
+        // UJI: Simpan data dummy ke Firebase
+setTimeout(() => {
+  if (database) {
+    database.ref('test').set({
+      message: "Hello from Kasir App!",
+      timestamp: Date.now()
+    }).then(() => {
+      console.log("🎉 Data berhasil disimpan ke /test");
+      showToast("Connected to Firebase!", "success");
+    }).catch(err => {
+      console.error("❌ Gagal simpan ke Firebase:", err);
+      showToast("Failed to connect to Firebase", "error");
+    });
+  } else {
+    console.error("❌ Database not initialized");
+  }
+}, 2000);
+        
     </script>
 </body>
 </html>
