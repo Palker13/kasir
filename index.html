@@ -903,49 +903,12 @@
         function initializeFirebase() {
             if (firebaseInitialized) return;
             try {
-                database = {
-                    ref: function(path) {
-                        return {
-                            set: function(data) {
-                                return new Promise((resolve) => {
-                                    localStorage.setItem('firebase:' + path, JSON.stringify(data));
-                                    resolve();
-                                });
-                            },
-                            update: function(data) {
-                                return new Promise((resolve) => {
-                                    const existingData = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
-                                    const updatedData = { ...existingData, ...data };
-                                    localStorage.setItem('firebase:' + path, JSON.stringify(updatedData));
-                                    resolve();
-                                });
-                            },
-                            once: function(eventType) {
-                                return new Promise((resolve) => {
-                                    const data = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
-                                    resolve({
-                                        val: function() { return data; },
-                                        exists: function() { return Object.keys(data).length > 0; }
-                                    });
-                                });
-                            },
-                            on: function(eventType, callback) {
-                                const intervalId = setInterval(() => {
-                                    const data = JSON.parse(localStorage.getItem('firebase:' + path) || '{}');
-                                    callback({ val: function() { return data; } });
-                                }, 5000);
-                                return function() { clearInterval(intervalId); };
-                            },
-                            child: function(childPath) {
-                                return this.ref(path + '/' + childPath);
-                            }
-                        };
-                    }
-                };
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
                 firebaseInitialized = true;
+                console.log("✅ Firebase initialized successfully");
             } catch (error) {
-                console.error('Error initializing Firebase:', error);
-                showToast('Error initializing cloud synchronization', 'error');
+                console.error("❌ Error initializing Firebase:", error);
             }
         }
 
