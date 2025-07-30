@@ -1819,6 +1819,14 @@ setTimeout(() => {
     console.error("❌ Database not initialized");
   }
 }, 2000);
+
+        // Tambahkan di akhir script
+window.forceSave = async () => {
+  console.log("Forcing save...");
+  await saveUsersToCloud();
+  await saveProductsToCloud();
+  console.log("Save completed");
+};
         
     </script>
 </body>
