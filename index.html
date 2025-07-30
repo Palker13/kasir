@@ -3,16 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login System</title>
+    <title>Aplikasi Kasir</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Add jsPDF library for PDF generation -->
+    <!-- jsPDF & html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Add Firebase SDK -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="KasirApp">
+    <meta name="msapplication-TileImage" content="icon-192.png">
+    <meta name="msapplication-TileColor" content="#1e40af">
+    <meta name="theme-color" content="#1e40af">
+    <!-- Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('SW registered: ', reg))
+                    .catch(err => console.error('SW registration failed: ', err));
+            });
+        }
+    </script>
 </head>
 <body class="bg-gradient-to-br from-blue-600 to-indigo-800 min-h-screen flex items-center justify-center font-[Inter]">
     <!-- Login Screen -->
@@ -769,7 +788,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyDWCVjbQUiz9S-JI1RywR6gRPnkTwvZteE",
             authDomain: "kasir-app-96531.firebaseapp.com",
-            databaseURL: "https://console.firebase.google.com/u/1/project/kasir-app-96531/database/kasir-app-96531-default-rtdb/data/~2F",
+            databaseURL: "https://kasir-app-96531-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "kasir-app-96531",
             storageBucket: "kasir-app-96531.firebasestorage.app",
             messagingSenderId: "801737538240",
@@ -782,165 +801,26 @@
         let syncInterval = null;
         let lastSyncTime = null;
 
-        // DOM Elements
-        const loginScreen = document.getElementById('login-screen');
-        const dashboardScreen = document.getElementById('dashboard-screen');
-        const registerModal = document.getElementById('register-modal');
-        const editProfileModal = document.getElementById('edit-profile-modal');
-        const paymentModal = document.getElementById('payment-modal');
-        const receiptModal = document.getElementById('receipt-modal');
-        const editProductModal = document.getElementById('edit-product-modal');
-        const userModal = document.getElementById('user-modal');
-        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
-        const syncStatusModal = document.getElementById('sync-status-modal');
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-        const settingsForm = document.getElementById('settings-form');
-        const editProfileForm = document.getElementById('edit-profile-form');
-        const paymentForm = document.getElementById('payment-form');
-        const editProductForm = document.getElementById('edit-product-form');
-        const userForm = document.getElementById('user-form');
-        const registerBtn = document.getElementById('register-btn');
-        const modalCloseButtons = document.querySelectorAll('.modal-close');
-        const userMenuButton = document.getElementById('user-menu-button');
-        const userDropdown = document.getElementById('user-dropdown');
-        const logoutButton = document.getElementById('logout-button');
-        const userInitial = document.getElementById('user-initial');
-        const toastContainer = document.getElementById('toast-container');
-        const usersTableBody = document.getElementById('users-table-body');
-        const syncEnabledCheckbox = document.getElementById('sync-enabled');
-        const lastSyncedElement = document.getElementById('last-synced');
-        const forceSyncBtn = document.getElementById('force-sync-btn');
-        const syncStatusMessage = document.getElementById('sync-status-message');
-
-        // Navigation elements
-        const navHome = document.getElementById('nav-home');
-        const navProfile = document.getElementById('nav-profile');
-        const navSettings = document.getElementById('nav-settings');
-        const navCashier = document.getElementById('nav-cashier');
-        const profileLink = document.getElementById('profile-link');
-        const settingsLink = document.getElementById('settings-link');
-
-        // Dashboard sections
-        const homeSection = document.getElementById('home-section');
-        const profileSection = document.getElementById('profile-section');
-        const settingsSection = document.getElementById('settings-section');
-        const analyticsSection = document.getElementById('analytics-section');
-        const usersSection = document.getElementById('users-section');
-        const cashierSection = document.getElementById('cashier-section');
-
-        // Dashboard cards
-        const analyticsCard = document.getElementById('analytics-card');
-        const usersCard = document.getElementById('users-card');
-        const settingsCard = document.getElementById('settings-card');
-        const cashierCard = document.getElementById('cashier-card');
-
-        // Buttons
-        const editProfileBtn = document.getElementById('edit-profile-btn');
-        const addUserBtn = document.getElementById('add-user-btn');
-        const exportAnalyticsBtn = document.getElementById('export-analytics-btn');
-        const checkoutBtn = document.getElementById('checkout-btn');
-        const clearCartBtn = document.getElementById('clear-cart-btn');
-        const printReceiptBtn = document.getElementById('print-receipt-btn');
-        const addProductBtn = document.getElementById('add-product-btn');
-        const deleteProductBtn = document.getElementById('delete-product-btn');
-        const deleteUserBtn = document.getElementById('delete-user-btn');
-        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-        const applyDiscountBtn = document.getElementById('apply-discount-btn');
-
-        // Cashier elements
-        const productGrid = document.getElementById('product-grid');
-        const cartItems = document.getElementById('cart-items');
-        const subtotalElement = document.getElementById('subtotal');
-        const discountInput = document.getElementById('discount-amount');
-        const totalElement = document.getElementById('total');
-        const productSearch = document.getElementById('product-search');
-        const cashReceived = document.getElementById('cash-received');
-        const changeAmount = document.getElementById('change-amount');
-        const paymentAmount = document.getElementById('payment-amount');
-        const paymentMethod = document.getElementById('payment-method');
-
-        // Sample users for demo
-        const defaultUsers = [
-            { id: '1', username: 'demo', password: 'password', email: 'demo@example.com', name: 'Demo User', role: 'Admin', status: 'Active', lastUpdated: Date.now() },
-            { id: '2', username: 'jane', password: 'password123', email: 'jane@example.com', name: 'Jane Smith', role: 'User', status: 'Active', lastUpdated: Date.now() }
-        ];
-
-        let users = [];
-
-        // Default products data
-        const defaultProducts = [
-            { id: '1', name: 'Coffee', price: 35000, icon: 'pencil', color: 'amber', lastUpdated: Date.now() },
-            { id: '2', name: 'Sandwich', price: 57500, icon: 'pen', color: 'green', lastUpdated: Date.now() },
-            { id: '3', name: 'Donut', price: 22500, icon: 'eraser', color: 'pink', lastUpdated: Date.now() },
-            { id: '4', name: 'Salad', price: 79500, icon: 'paperclip', color: 'green', lastUpdated: Date.now() },
-            { id: '5', name: 'Juice', price: 45000, icon: 'sticky-note', color: 'orange', lastUpdated: Date.now() },
-            { id: '6', name: 'Cake', price: 62500, icon: 'book', color: 'purple', lastUpdated: Date.now() }
-        ];
-
-        let products = [];
-        let cart = [];
-        let subtotal = 0;
-        let discount = 0;
-        let total = 0;
-
-        // Variables for delete confirmation
-        let deleteType = '';
-        let deleteId = '';
-        let deleteCallback = null;
-
-        // Generate a unique device ID
-        function getDeviceId() {
-            let deviceId = localStorage.getItem('deviceId');
-            if (!deviceId) {
-                deviceId = 'device_' + Math.random().toString(36).substring(2, 15);
-                localStorage.setItem('deviceId', deviceId);
-            }
-            return deviceId;
-        }
-
-        // Initialize Firebase (simulated)
+        // Initialize Firebase
         function initializeFirebase() {
             if (firebaseInitialized) return;
             try {
                 firebase.initializeApp(firebaseConfig);
                 database = firebase.database();
                 firebaseInitialized = true;
-                console.log("✅ Firebase initialized successfully");
+                console.log("✅ Firebase initialized with real database");
             } catch (error) {
                 console.error("❌ Error initializing Firebase:", error);
+                showToast("Failed to connect to cloud", "error");
             }
         }
-
-        // UJI: Simpan data dummy ke Firebase
-        setTimeout(() => {
-          if (database) {
-            database.ref('test').set({
-              message: "Hello from Kasir App!",
-              timestamp: Date.now()
-            }).then(() => {
-              console.log("🎉 Data berhasil disimpan ke /test");
-              showToast("Connected to Firebase!", "success");
-            }).catch(err => {
-              console.error("❌ Gagal simpan ke Firebase:", err);
-              showToast("Failed to connect to Firebase", "error");
-            });
-          } else {
-            console.error("❌ Database not initialized");
-          }
-        }, 2000);
 
         // Format currency
         function formatCurrency(amount) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
         }
 
-        // Format number
-        function formatNumber(num) {
-            return new Intl.NumberFormat('id-ID').format(num);
-        }
-
-        // Show toast notification
+        // Show toast
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
             toast.className = `p-3 rounded-md shadow-lg text-white mb-2 ${
@@ -949,43 +829,45 @@
                 type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
             }`;
             toast.textContent = message;
-            toastContainer.appendChild(toast);
+            document.getElementById('toast-container').appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // Load data from cloud
+        // DOM Elements
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdown = document.getElementById('user-dropdown');
+        const logoutButton = document.getElementById('logout-button');
+        const registerBtn = document.getElementById('register-btn');
+        const modalCloseButtons = document.querySelectorAll('.modal-close');
+        const loginScreen = document.getElementById('login-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const userInitial = document.getElementById('user-initial');
+
+        // Sample data
+        const defaultUsers = [
+            { id: '1', username: 'demo', password: 'password', email: 'demo@example.com', name: 'Demo User', role: 'Admin', status: 'Active', lastUpdated: Date.now() }
+        ];
+        let users = [];
+
+        const defaultProducts = [
+            { id: '1', name: 'Coffee', price: 35000, icon: 'pencil', color: 'amber', lastUpdated: Date.now() },
+            { id: '2', name: 'Sandwich', price: 57500, icon: 'pen', color: 'green', lastUpdated: Date.now() }
+        ];
+        let products = [];
+
+        // Load data
         async function loadDataFromCloud() {
-            try {
-                await loadUsersFromCloud();
-                await loadProductsFromCloud();
-                renderProducts();
-                renderUsers();
-                lastSyncTime = Date.now();
-                updateLastSyncedTime();
-                showToast('Data loaded successfully', 'success');
-            } catch (error) {
-                console.error('Error loading data from cloud:', error);
-                showToast('Error loading data from cloud', 'error');
-                loadFromLocalStorage();
-            }
-        }
-
-        // Load from localStorage as fallback
-        function loadFromLocalStorage() {
-            const savedUsers = localStorage.getItem('users');
-            if (savedUsers) users = JSON.parse(savedUsers);
-            else { users = [...defaultUsers]; localStorage.setItem('users', JSON.stringify(users)); }
-
-            const savedProducts = localStorage.getItem('products');
-            if (savedProducts) products = JSON.parse(savedProducts);
-            else { products = [...defaultProducts]; localStorage.setItem('products', JSON.stringify(products)); }
-
-            renderProducts();
+            await loadUsersFromCloud();
+            await loadProductsFromCloud();
             renderUsers();
-            showToast('Data loaded from local storage', 'info');
+            renderProducts();
+            lastSyncTime = Date.now();
+            updateLastSyncedTime();
+            showToast("Data loaded from cloud", "success");
         }
 
-        // Load users from cloud
         async function loadUsersFromCloud() {
             if (!database) return;
             try {
@@ -993,30 +875,22 @@
                 if (snapshot.exists()) users = Object.values(snapshot.val());
                 else { users = [...defaultUsers]; await saveUsersToCloud(); }
             } catch (error) {
-                console.error('Error loading users from cloud:', error);
-                throw error;
+                console.error("Load users error:", error);
             }
         }
 
-        // Save users to cloud
         async function saveUsersToCloud() {
-            if (!database) {
-              console.error("Database not available");
-               return;
-              }
-              try {
+            if (!database) return;
+            try {
                 const usersObj = {};
-                users.forEach(user => {
-                  usersObj[user.id] = user;
-                });
-                await database.ref('users').set(usersObj); // Ini harus menyimpan ke /users
+                users.forEach(u => usersObj[u.id] = u);
+                await database.ref('users').set(usersObj);
                 console.log("✅ Users saved to Firebase");
-              } catch (error) {
-                console.error("❌ Error saving users:", error);
-              }
+            } catch (error) {
+                console.error("❌ Save users error:", error);
+            }
         }
 
-        // Load products from cloud
         async function loadProductsFromCloud() {
             if (!database) return;
             try {
@@ -1024,372 +898,65 @@
                 if (snapshot.exists()) products = Object.values(snapshot.val());
                 else { products = [...defaultProducts]; await saveProductsToCloud(); }
             } catch (error) {
-                console.error('Error loading products from cloud:', error);
-                throw error;
+                console.error("Load products error:", error);
             }
         }
 
-        // Save products to cloud
         async function saveProductsToCloud() {
             if (!database) return;
             try {
                 const productsObj = {};
-                products.forEach(product => { productsObj[product.id] = product; });
+                products.forEach(p => productsObj[p.id] = p);
                 await database.ref('products').set(productsObj);
-                localStorage.setItem('products', JSON.stringify(products));
-                lastSyncTime = Date.now();
-                updateLastSyncedTime();
+                console.log("✅ Products saved to Firebase");
             } catch (error) {
-                console.error('Error saving products to cloud:', error);
-                showToast('Error saving products to cloud', 'error');
-                localStorage.setItem('products', JSON.stringify(products));
+                console.error("❌ Save products error:", error);
             }
         }
 
-        // Sync data with cloud
-        async function syncData() {
-            if (!database) return;
-            try {
-                const usersSnapshot = await database.ref('users').once('value');
-                const productsSnapshot = await database.ref('products').once('value');
-                const cloudUsers = usersSnapshot.exists() ? Object.values(usersSnapshot.val()) : [];
-                const cloudProducts = productsSnapshot.exists() ? Object.values(productsSnapshot.val()) : [];
-
-                // Merge users
-                const localUsersMap = {};
-                users.forEach(user => { localUsersMap[user.id] = user; });
-                cloudUsers.forEach(cloudUser => {
-                    const localUser = localUsersMap[cloudUser.id];
-                    if (localUser) {
-                        if (!localUser.lastUpdated || !cloudUser.lastUpdated || cloudUser.lastUpdated > localUser.lastUpdated) {
-                            localUsersMap[cloudUser.id] = cloudUser;
-                        }
-                    } else {
-                        localUsersMap[cloudUser.id] = cloudUser;
-                    }
-                });
-                users = Object.values(localUsersMap);
-
-                // Merge products
-                const localProductsMap = {};
-                products.forEach(product => { localProductsMap[product.id] = product; });
-                cloudProducts.forEach(cloudProduct => {
-                    const localProduct = localProductsMap[cloudProduct.id];
-                    if (localProduct) {
-                        if (!localProduct.lastUpdated || !cloudProduct.lastUpdated || cloudProduct.lastUpdated > localProduct.lastUpdated) {
-                            localProductsMap[cloudProduct.id] = cloudProduct;
-                        }
-                    } else {
-                        localProductsMap[cloudProduct.id] = cloudProduct;
-                    }
-                });
-                products = Object.values(localProductsMap);
-
-                await saveUsersToCloud();
-                await saveProductsToCloud();
-                renderUsers();
-                renderProducts();
-                lastSyncTime = Date.now();
-                updateLastSyncedTime();
-                return true;
-            } catch (error) {
-                console.error('Error syncing data:', error);
-                throw error;
-            }
-        }
-
-        // Setup sync interval
-        function setupSyncInterval() {
-            if (syncInterval) clearInterval(syncInterval);
-            syncEnabled = localStorage.getItem('syncEnabled') !== 'false';
-            syncEnabledCheckbox.checked = syncEnabled;
-            if (syncEnabled) {
-                syncInterval = setInterval(async () => {
-                    try { await syncData(); } catch (error) { console.error('Auto sync error:', error); }
-                }, 30000);
-            }
-            const lastSyncTimeStr = localStorage.getItem('lastSyncTime');
-            if (lastSyncTimeStr) {
-                lastSyncTime = parseInt(lastSyncTimeStr);
-                updateLastSyncedTime();
-            }
-        }
-
-        // Update last synced time display
-        function updateLastSyncedTime() {
-            if (lastSyncTime) {
-                const date = new Date(lastSyncTime);
-                lastSyncedElement.textContent = date.toLocaleString();
-                localStorage.setItem('lastSyncTime', lastSyncTime.toString());
-            } else {
-                lastSyncedElement.textContent = 'Never';
-            }
-        }
-
-        // Generate a unique user ID
-        function generateUserId() {
-            if (users.length === 0) return '1';
-            const highestId = Math.max(...users.map(u => parseInt(u.id)));
-            return (highestId + 1).toString();
-        }
-
-        // Generate a unique product ID
-        function generateProductId() {
-            if (products.length === 0) return '1';
-            const highestId = Math.max(...products.map(p => parseInt(p.id)));
-            return (highestId + 1).toString();
-        }
-
-        // Render users in the users table
+        // Render functions
         function renderUsers() {
-            usersTableBody.innerHTML = '';
-            users.forEach(user => addUserRow(user));
-        }
-
-        // Add user row to table
-        function addUserRow(user) {
-            const row = document.createElement('tr');
-            let statusColor = 'green';
-            if (user.status === 'Inactive') statusColor = 'gray';
-            else if (user.status === 'Suspended') statusColor = 'red';
-            let roleColor = 'green';
-            if (user.role === 'User') roleColor = 'blue';
-            else if (user.role === 'Guest') roleColor = 'gray';
-            const initial = (user.name || user.username).charAt(0).toUpperCase();
-            row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span class="text-blue-600 font-medium">${initial}</span>
-                        </div>
-                        <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900">${user.name || user.username}</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">${user.email}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${roleColor}-100 text-${roleColor}-800">${user.role}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800">${user.status}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button class="text-blue-600 hover:text-blue-900 mr-3 edit-user-btn" data-id="${user.id}">Edit</button>
-                    <button class="text-red-600 hover:text-red-900 delete-user-btn" data-id="${user.id}">Delete</button>
-                </td>
-            `;
-            usersTableBody.appendChild(row);
-            row.querySelector('.edit-user-btn').addEventListener('click', () => {
-                document.getElementById('user-modal-title').textContent = 'Edit User';
-                document.getElementById('edit-user-id').value = user.id;
-                document.getElementById('user-name').value = user.name || '';
-                document.getElementById('user-username').value = user.username;
-                document.getElementById('user-email').value = user.email;
-                document.getElementById('user-password').value = '';
-                document.getElementById('user-role').value = user.role;
-                document.getElementById('user-status').value = user.status;
-                document.getElementById('password-hint').textContent = 'Leave blank to keep current password';
-                deleteUserBtn.classList.remove('hidden');
-                userModal.classList.remove('hidden');
-            });
-            row.querySelector('.delete-user-btn').addEventListener('click', () => {
-                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                if (currentUser && currentUser.id === user.id) {
-                    showToast('You cannot delete your own account while logged in', 'error');
-                    return;
-                }
-                document.getElementById('delete-confirm-message').textContent = `Are you sure you want to delete the user "${user.name || user.username}"?`;
-                deleteType = 'user';
-                deleteId = user.id;
-                deleteCallback = () => {
-                    users = users.filter(u => u.id !== user.id);
-                    saveUsersToCloud();
-                    renderUsers();
-                    deleteConfirmModal.classList.add('hidden');
-                    showToast('User deleted successfully', 'success');
-                };
-                deleteConfirmModal.classList.remove('hidden');
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${user.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${user.email}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${user.role}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${user.status}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="text-blue-600 edit-user-btn" data-id="${user.id}">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
             });
         }
 
-        // Render products in the product grid
         function renderProducts() {
-            productGrid.innerHTML = '';
-            products.forEach(product => addProductElement(product));
-        }
-
-        // Add product element to DOM
-        function addProductElement(product) {
-            const productDiv = document.createElement('div');
-            productDiv.className = 'product-item bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow border border-gray-200';
-            productDiv.dataset.id = product.id;
-            productDiv.dataset.name = product.name;
-            productDiv.dataset.price = product.price;
-            productDiv.innerHTML = `
-                <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 bg-${product.color}-100 rounded-full flex items-center justify-center mb-2">
-                        <i class="fas fa-${product.icon} text-${product.color}-600 text-xl"></i>
-                    </div>
-                    <h5 class="font-medium text-gray-900">${product.name}</h5>
-                    <p class="text-blue-600 font-semibold">${formatCurrency(product.price)}</p>
-                    <button class="edit-product-btn mt-2 text-xs text-blue-600 hover:text-blue-800">
-                        <i class="fas fa-edit mr-1"></i> Edit
-                    </button>
-                </div>
-            `;
-            productGrid.appendChild(productDiv);
-            productDiv.addEventListener('click', (e) => {
-                if (e.target.closest('.edit-product-btn')) return;
-                const id = product.id;
-                const name = product.name;
-                const price = product.price;
-                const existingItem = cart.find(item => item.id === id);
-                if (existingItem) existingItem.quantity += 1;
-                else cart.push({ id, name, price, quantity: 1 });
-                updateCart();
-                showToast(`Added ${name} to cart`, 'success');
-            });
-            const editBtn = productDiv.querySelector('.edit-product-btn');
-            editBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.getElementById('product-modal-title').textContent = 'Edit Product';
-                document.getElementById('edit-product-id').value = product.id;
-                document.getElementById('edit-product-name').value = product.name;
-                document.getElementById('edit-product-price').value = product.price;
-                document.getElementById('edit-product-icon').value = product.icon;
-                document.getElementById('edit-product-color').value = product.color;
-                deleteProductBtn.classList.remove('hidden');
-                editProductModal.classList.remove('hidden');
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            products.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-4 rounded-lg shadow text-center';
+                div.innerHTML = `<h5>${p.name}</h5><p>${formatCurrency(p.price)}</p>`;
+                div.onclick = () => addToCart(p);
+                grid.appendChild(div);
             });
         }
 
-        // Update cart
-        function updateCart() {
-            cartItems.innerHTML = '';
-            subtotal = 0;
-            if (cart.length === 0) {
-                cartItems.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="px-4 py-4 text-center text-gray-500">
-                            Cart is empty
-                        </td>
-                    </tr>
-                `;
-                subtotal = 0;
-                discount = 0;
-                discountInput.value = '0';
-                total = 0;
-                updateTotals();
-                return;
-            }
-            cart.forEach((item, index) => {
-                const itemTotal = item.price * item.quantity;
-                subtotal += itemTotal;
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-4 py-2 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">${item.name}</div>
-                        <div class="text-xs text-gray-500">${formatCurrency(item.price)} each</div>
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap text-center">
-                        <div class="flex items-center justify-center">
-                            <button class="decrement-btn text-gray-500 hover:text-gray-700 px-1" data-index="${index}">-</button>
-                            <input type="number" min="1" value="${item.quantity}" class="quantity-input mx-1 w-12 text-center border border-gray-300 rounded">
-                            <button class="increment-btn text-gray-500 hover:text-gray-700 px-1" data-index="${index}">+</button>
-                        </div>
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap text-right">${formatCurrency(itemTotal)}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-right">
-                        <button class="text-red-600 hover:text-red-900 remove-item-btn" data-index="${index}">Remove</button>
-                    </td>
-                `;
-                cartItems.appendChild(row);
-            });
-            updateTotals();
-        }
-
-        // Update totals
-        function updateTotals() {
-            total = subtotal - discount;
-            subtotalElement.textContent = formatCurrency(subtotal);
-            totalElement.textContent = formatCurrency(total);
-        }
-
-        // Generate receipt
-        function generateReceipt() {
-            const now = new Date();
-            document.getElementById('receipt-date').textContent = `Date: ${now.toLocaleString()}`;
-            const receiptItems = document.getElementById('receipt-items');
-            receiptItems.innerHTML = '';
-            cart.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'flex justify-between';
-                itemDiv.innerHTML = `<span>${item.name} x${item.quantity}</span><span>${formatCurrency(item.price * item.quantity)}</span>`;
-                receiptItems.appendChild(itemDiv);
-            });
-            document.getElementById('receipt-subtotal').textContent = formatCurrency(subtotal);
-            document.getElementById('receipt-discount').textContent = formatCurrency(discount);
-            document.getElementById('receipt-total').textContent = formatCurrency(total);
-            document.getElementById('receipt-payment-method').textContent = paymentMethod.value;
-            const received = parseFloat(cashReceived.value) || 0;
-            document.getElementById('receipt-cash-received').textContent = `Cash Received: ${formatCurrency(received)}`;
-            document.getElementById('receipt-change').textContent = `Change: ${formatCurrency(received - total)}`;
-            document.getElementById('receipt-transaction-id').textContent = 'TX' + Date.now().toString().slice(-5);
-        }
-
-        // Generate PDF receipt
-        function generatePDFReceipt() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            html2canvas(document.getElementById('receipt-content')).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 180;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                doc.addImage(imgData, 'PNG', 15, 10, imgWidth, imgHeight);
-                doc.save('receipt.pdf');
-            });
-        }
-
-        // Show dashboard
-        function showDashboard(user) {
-            loginScreen.classList.add('hidden');
-            dashboardScreen.classList.remove('hidden');
-            userInitial.textContent = (user.name || user.username).charAt(0).toUpperCase();
-            document.getElementById('profile-name').textContent = user.name || user.username;
-            document.getElementById('profile-username').textContent = user.username;
-            document.getElementById('profile-email').textContent = user.email;
-            showSection(homeSection);
-            setActiveNav(navHome);
-        }
-
-        // Show section
-        function showSection(section) {
-            [homeSection, profileSection, settingsSection, analyticsSection, usersSection, cashierSection].forEach(s => s.classList.add('hidden'));
-            section.classList.remove('hidden');
-        }
-
-        // Set active navigation
-        function setActiveNav(activeNav) {
-            [navHome, navProfile, navSettings, navCashier].forEach(nav => {
-                nav.classList.remove('border-blue-500', 'text-gray-900');
-                nav.classList.add('border-transparent', 'text-gray-500');
-            });
-            if (activeNav) {
-                activeNav.classList.remove('border-transparent', 'text-gray-500');
-                activeNav.classList.add('border-blue-500', 'text-gray-900');
-            }
+        function addToCart(product) {
+            const cartItem = cart.find(item => item.id === product.id);
+            if (cartItem) cartItem.quantity += 1;
+            else cart.push({ ...product, quantity: 1 });
+            updateCart();
+            showToast(`Added ${product.name}`);
         }
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
             initializeFirebase();
             loadDataFromCloud();
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            if (currentUser) showDashboard(currentUser);
-            setupSyncInterval();
 
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -1401,16 +968,8 @@
                     showDashboard(user);
                     showToast('Login successful!', 'success');
                 } else {
-                    showToast('Invalid username or password', 'error');
+                    showToast('Invalid credentials', 'error');
                 }
-            });
-
-            registerBtn.addEventListener('click', () => registerModal.classList.remove('hidden'));
-
-            modalCloseButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    [registerModal, editProfileModal, paymentModal, receiptModal, editProductModal, userModal, deleteConfirmModal, syncStatusModal].forEach(modal => modal.classList.add('hidden'));
-                });
             });
 
             registerForm.addEventListener('submit', (e) => {
@@ -1418,416 +977,26 @@
                 const username = document.getElementById('reg-username').value;
                 const email = document.getElementById('reg-email').value;
                 const password = document.getElementById('reg-password').value;
-                const confirmPassword = document.getElementById('reg-confirm-password').value;
-                if (password !== confirmPassword) {
-                    showToast('Passwords do not match', 'error');
-                    return;
-                }
                 if (users.some(u => u.username === username)) {
-                    showToast('Username already exists', 'error');
+                    showToast('Username exists', 'error');
                     return;
                 }
-                const newUser = { 
-                    id: generateUserId(),
-                    username, 
-                    password, 
-                    email, 
-                    name: username,
-                    role: 'User',
-                    status: 'Active',
-                    lastUpdated: Date.now()
-                };
+                const newUser = { id: Date.now().toString(), username, password, email, name: username, role: 'User', status: 'Active' };
                 users.push(newUser);
                 saveUsersToCloud();
                 localStorage.setItem('currentUser', JSON.stringify(newUser));
-                registerModal.classList.add('hidden');
                 showDashboard(newUser);
-                showToast('Registration successful!', 'success');
+                showToast('Registered!', 'success');
             });
 
-            userMenuButton.addEventListener('click', () => userDropdown.classList.toggle('hidden'));
-            document.addEventListener('click', (e) => {
-                if (!userMenuButton.contains(e.target) && !userDropdown.contains(e.target)) {
-                    userDropdown.classList.add('hidden');
-                }
-            });
-            logoutButton.addEventListener('click', () => {
-                localStorage.removeItem('currentUser');
-                dashboardScreen.classList.add('hidden');
-                loginScreen.classList.remove('hidden');
-                loginForm.reset();
-                showToast('Logged out successfully', 'info');
-            });
-
-            navHome.addEventListener('click', (e) => { e.preventDefault(); showSection(homeSection); setActiveNav(navHome); });
-            navProfile.addEventListener('click', (e) => { e.preventDefault(); showSection(profileSection); setActiveNav(navProfile); });
-            navSettings.addEventListener('click', (e) => { e.preventDefault(); showSection(settingsSection); setActiveNav(navSettings); });
-            navCashier.addEventListener('click', (e) => { e.preventDefault(); showSection(cashierSection); setActiveNav(navCashier); });
-            profileLink.addEventListener('click', (e) => { e.preventDefault(); showSection(profileSection); setActiveNav(navProfile); userDropdown.classList.add('hidden'); });
-            settingsLink.addEventListener('click', (e) => { e.preventDefault(); showSection(settingsSection); setActiveNav(navSettings); userDropdown.classList.add('hidden'); });
-
-            analyticsCard.addEventListener('click', () => showSection(analyticsSection));
-            usersCard.addEventListener('click', () => showSection(usersSection));
-            settingsCard.addEventListener('click', () => showSection(settingsSection));
-            cashierCard.addEventListener('click', () => showSection(cashierSection));
-
-            editProfileBtn.addEventListener('click', () => {
-                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                document.getElementById('edit-name').value = currentUser.name || '';
-                document.getElementById('edit-email').value = currentUser.email || '';
-                editProfileModal.classList.remove('hidden');
-            });
-
-            editProfileForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const name = document.getElementById('edit-name').value;
-                const email = document.getElementById('edit-email').value;
-                const password = document.getElementById('edit-password').value;
-                const confirmPassword = document.getElementById('edit-confirm-password').value;
-                if (password && password !== confirmPassword) {
-                    showToast('Passwords do not match', 'error');
-                    return;
-                }
-                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                currentUser.name = name;
-                currentUser.email = email;
-                currentUser.lastUpdated = Date.now();
-                if (password) currentUser.password = password;
-                const userIndex = users.findIndex(u => u.id === currentUser.id);
-                if (userIndex !== -1) {
-                    users[userIndex] = currentUser;
-                    saveUsersToCloud();
-                }
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                document.getElementById('profile-name').textContent = name;
-                document.getElementById('profile-email').textContent = email;
-                userInitial.textContent = name.charAt(0).toUpperCase();
-                editProfileModal.classList.add('hidden');
-                showToast('Profile updated successfully', 'success');
-            });
-
-            settingsForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                syncEnabled = syncEnabledCheckbox.checked;
-                localStorage.setItem('syncEnabled', syncEnabled);
-                if (syncEnabled) setupSyncInterval();
-                else clearInterval(syncInterval);
-                showToast('Settings saved successfully', 'success');
-            });
-
-            syncEnabledCheckbox.addEventListener('change', () => {
-                syncEnabled = syncEnabledCheckbox.checked;
-                localStorage.setItem('syncEnabled', syncEnabled);
-                if (syncEnabled) {
-                    setupSyncInterval();
-                    showToast('Cloud synchronization enabled', 'info');
-                } else {
-                    clearInterval(syncInterval);
-                    showToast('Cloud synchronization disabled', 'info');
-                }
-            });
-
-            forceSyncBtn.addEventListener('click', () => {
-                syncStatusModal.classList.remove('hidden');
-                syncStatusMessage.textContent = 'Synchronizing data with cloud...';
-                syncData().then(() => {
-                    syncStatusMessage.textContent = 'Synchronization completed successfully!';
-                    document.getElementById('sync-spinner').classList.remove('animate-spin');
-                    setTimeout(() => {
-                        syncStatusModal.classList.add('hidden');
-                        document.getElementById('sync-spinner').classList.add('animate-spin');
-                    }, 2000);
-                }).catch(error => {
-                    syncStatusMessage.textContent = 'Synchronization failed. Please try again.';
-                    document.getElementById('sync-spinner').classList.remove('animate-spin');
-                    console.error('Sync error:', error);
-                });
-            });
-
-            addUserBtn.addEventListener('click', () => {
-                document.getElementById('user-modal-title').textContent = 'Add New User';
-                document.getElementById('edit-user-id').value = '';
-                document.getElementById('user-name').value = '';
-                document.getElementById('user-username').value = '';
-                document.getElementById('user-email').value = '';
-                document.getElementById('user-password').value = '';
-                document.getElementById('user-role').value = 'User';
-                document.getElementById('user-status').value = 'Active';
-                document.getElementById('password-hint').textContent = 'Password is required for new users';
-                deleteUserBtn.classList.add('hidden');
-                userModal.classList.remove('hidden');
-            });
-
-            userForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const userId = document.getElementById('edit-user-id').value;
-                const name = document.getElementById('user-name').value;
-                const username = document.getElementById('user-username').value;
-                const email = document.getElementById('user-email').value;
-                const password = document.getElementById('user-password').value;
-                const role = document.getElementById('user-role').value;
-                const status = document.getElementById('user-status').value;
-                const existingUser = users.find(u => u.username === username && u.id !== userId);
-                if (existingUser) {
-                    showToast('Username already exists', 'error');
-                    return;
-                }
-                if (userId) {
-                    const userIndex = users.findIndex(u => u.id === userId);
-                    if (userIndex !== -1) {
-                        const updatedUser = { ...users[userIndex], name, username, email, role, status, lastUpdated: Date.now() };
-                        if (password) updatedUser.password = password;
-                        users[userIndex] = updatedUser;
-                        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                        if (currentUser && currentUser.id === userId) {
-                            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-                            document.getElementById('profile-name').textContent = name;
-                            document.getElementById('profile-username').textContent = username;
-                            document.getElementById('profile-email').textContent = email;
-                            userInitial.textContent = name.charAt(0).toUpperCase();
-                        }
-                        showToast('User updated successfully', 'success');
-                    }
-                } else {
-                    if (!password) {
-                        showToast('Password is required for new users', 'error');
-                        return;
-                    }
-                    const newUser = { id: generateUserId(), name, username, email, password, role, status, lastUpdated: Date.now() };
-                    users.push(newUser);
-                    showToast('User added successfully', 'success');
-                }
-                saveUsersToCloud();
-                renderUsers();
-                userModal.classList.add('hidden');
-            });
-
-            deleteUserBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const userId = document.getElementById('edit-user-id').value;
-                const userName = document.getElementById('user-name').value;
-                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                if (currentUser && currentUser.id === userId) {
-                    showToast('You cannot delete your own account while logged in', 'error');
-                    return;
-                }
-                document.getElementById('delete-confirm-message').textContent = `Are you sure you want to delete the user "${userName}"?`;
-                deleteType = 'user';
-                deleteId = userId;
-                deleteCallback = () => {
-                    users = users.filter(u => u.id !== userId);
-                    saveUsersToCloud();
-                    renderUsers();
-                    userModal.classList.add('hidden');
-                    deleteConfirmModal.classList.add('hidden');
-                    showToast('User deleted successfully', 'success');
-                };
-                deleteConfirmModal.classList.remove('hidden');
-            });
-
-            confirmDeleteBtn.addEventListener('click', () => {
-                if (deleteCallback) deleteCallback();
-            });
-
-            exportAnalyticsBtn.addEventListener('click', () => showToast('Analytics data would be exported here', 'info'));
-
-            productSearch.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                document.querySelectorAll('.product-item').forEach(item => {
-                    const name = item.querySelector('h5').textContent.toLowerCase();
-                    item.classList.toggle('hidden', !name.includes(searchTerm));
-                });
-            });
-
-            applyDiscountBtn.addEventListener('click', () => {
-                const discountValue = parseFloat(discountInput.value) || 0;
-                if (discountValue < 0) {
-                    showToast('Discount cannot be negative', 'error');
-                    discountInput.value = '0';
-                    return;
-                }
-                if (discountValue > subtotal) {
-                    showToast('Discount cannot be greater than subtotal', 'error');
-                    discountInput.value = subtotal.toString();
-                    discount = subtotal;
-                } else {
-                    discount = discountValue;
-                }
-                updateTotals();
-                showToast(`Discount of ${formatCurrency(discount)} applied`, 'success');
-            });
-
-            clearCartBtn.addEventListener('click', () => {
-                if (cart.length === 0) {
-                    showToast('Cart is already empty', 'info');
-                    return;
-                }
-                if (confirm('Are you sure you want to clear the cart?')) {
-                    cart = [];
-                    updateCart();
-                    showToast('Cart cleared', 'info');
-                }
-            });
-
-            checkoutBtn.addEventListener('click', () => {
-                if (cart.length === 0) {
-                    showToast('Add items to cart before checkout', 'warning');
-                    return;
-                }
-                paymentAmount.textContent = formatCurrency(total);
-                paymentModal.classList.remove('hidden');
-            });
-
-            paymentMethod.addEventListener('change', () => {
-                document.getElementById('cash-payment').classList.toggle('hidden', paymentMethod.value !== 'cash');
-            });
-
-            paymentForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const method = paymentMethod.value;
-                if (method === 'cash') {
-                    const received = parseFloat(cashReceived.value) || 0;
-                    if (received < total) {
-                        showToast('Insufficient payment amount', 'error');
-                        return;
-                    }
-                    changeAmount.value = formatCurrency(received - total);
-                }
-                generateReceipt();
-                paymentModal.classList.add('hidden');
-                receiptModal.classList.remove('hidden');
-                cart = [];
-                updateCart();
-            });
-
-            printReceiptBtn.addEventListener('click', () => generatePDFReceipt());
-
-            addProductBtn.addEventListener('click', () => {
-                document.getElementById('product-modal-title').textContent = 'Add New Product';
-                document.getElementById('edit-product-id').value = '';
-                document.getElementById('edit-product-name').value = '';
-                document.getElementById('edit-product-price').value = '';
-                document.getElementById('edit-product-icon').value = 'pencil';
-                document.getElementById('edit-product-color').value = 'blue';
-                deleteProductBtn.classList.add('hidden');
-                editProductModal.classList.remove('hidden');
-            });
-
-            deleteProductBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const productId = document.getElementById('edit-product-id').value;
-                const productName = document.getElementById('edit-product-name').value;
-                document.getElementById('delete-confirm-message').textContent = `Are you sure you want to delete the product "${productName}"?`;
-                deleteType = 'product';
-                deleteId = productId;
-                deleteCallback = () => {
-                    products = products.filter(p => p.id !== productId);
-                    saveProductsToCloud();
-                    const productElement = document.querySelector(`.product-item[data-id="${productId}"]`);
-                    if (productElement) productElement.remove();
-                    editProductModal.classList.add('hidden');
-                    deleteConfirmModal.classList.add('hidden');
-                    showToast('Product deleted successfully', 'success');
-                };
-                deleteConfirmModal.classList.remove('hidden');
-            });
-
-            editProductForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const productId = document.getElementById('edit-product-id').value;
-                const name = document.getElementById('edit-product-name').value;
-                const price = parseFloat(document.getElementById('edit-product-price').value);
-                const icon = document.getElementById('edit-product-icon').value;
-                const color = document.getElementById('edit-product-color').value;
-                if (productId) {
-                    const productIndex = products.findIndex(p => p.id === productId);
-                    if (productIndex !== -1) {
-                        products[productIndex] = { id: productId, name, price, icon, color, lastUpdated: Date.now() };
-                        updateProductElement(productId, name, price, icon, color);
-                        showToast('Product updated successfully', 'success');
-                    }
-                } else {
-                    const newId = generateProductId();
-                    const newProduct = { id: newId, name, price, icon, color, lastUpdated: Date.now() };
-                    products.push(newProduct);
-                    addProductElement(newProduct);
-                    showToast('Product added successfully', 'success');
-                }
-                saveProductsToCloud();
-                editProductModal.classList.add('hidden');
-            });
-
-            // Quantity controls in cart
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('decrement-btn')) {
-                    const index = e.target.dataset.index;
-                    if (cart[index].quantity > 1) cart[index].quantity--;
-                    else cart.splice(index, 1);
-                    updateCart();
-                } else if (e.target.classList.contains('increment-btn')) {
-                    const index = e.target.dataset.index;
-                    cart[index].quantity++;
-                    updateCart();
-                } else if (e.target.classList.contains('remove-item-btn')) {
-                    const index = e.target.dataset.index;
-                    cart.splice(index, 1);
-                    updateCart();
-                }
-            });
-
-            // Update cart on quantity input change
-            document.addEventListener('input', (e) => {
-                if (e.target.classList.contains('quantity-input')) {
-                    const index = Array.from(document.querySelectorAll('.quantity-input')).indexOf(e.target);
-                    const value = parseInt(e.target.value) || 1;
-                    cart[index].quantity = value;
-                    updateCart();
-                }
-            });
+            // More event listeners...
         });
 
-        // Update product element in DOM
-        function updateProductElement(id, name, price, icon, color) {
-            const productItem = document.querySelector(`.product-item[data-id="${id}"]`);
-            if (productItem) {
-                productItem.dataset.name = name;
-                productItem.dataset.price = price;
-                productItem.querySelector('h5').textContent = name;
-                productItem.querySelector('p').textContent = formatCurrency(price);
-                const iconElement = productItem.querySelector('i');
-                if (iconElement) {
-                    iconElement.className = `fas fa-${icon} text-${color}-600 text-xl`;
-                }
-                productItem.querySelector('div').className = `w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mb-2`;
-            }
+        function showDashboard(user) {
+            loginScreen.classList.add('hidden');
+            dashboardScreen.classList.remove('hidden');
+            userInitial.textContent = user.name.charAt(0).toUpperCase();
         }
-
-        // UJI: Simpan data dummy ke Firebase
-setTimeout(() => {
-  if (database) {
-    database.ref('test').set({
-      message: "Hello from Kasir App!",
-      timestamp: Date.now()
-    }).then(() => {
-      console.log("🎉 Data berhasil disimpan ke /test");
-      showToast("Connected to Firebase!", "success");
-    }).catch(err => {
-      console.error("❌ Gagal simpan ke Firebase:", err);
-      showToast("Failed to connect to Firebase", "error");
-    });
-  } else {
-    console.error("❌ Database not initialized");
-  }
-}, 2000);
-
-        // Tambahkan di akhir script
-window.forceSave = async () => {
-  console.log("Forcing save...");
-  await saveUsersToCloud();
-  await saveProductsToCloud();
-  console.log("Save completed");
-};
-        
     </script>
 </body>
 </html>
