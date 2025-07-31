@@ -13,7 +13,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <!-- PWA Manifest -->
+    <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,8 +27,8 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js')
-                    .then(reg => console.log('SW registered: ', reg))
-                    .catch(err => console.error('SW registration failed: ', err));
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.error('SW registration failed', err));
             });
         }
     </script>
@@ -392,7 +392,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200" id="users-table-body">
-                                    <!-- User rows will be dynamically generated -->
+                                    <!-- Dynamic -->
                                 </tbody>
                             </table>
                         </div>
@@ -427,7 +427,7 @@
                                         </div>
                                     </div>
                                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="product-grid">
-                                        <!-- Product items will be dynamically generated -->
+                                        <!-- Dynamic -->
                                     </div>
                                 </div>
                             </div>
@@ -445,7 +445,7 @@
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200" id="cart-items">
-                                            <!-- Cart items will be dynamically added here -->
+                                            <!-- Dynamic -->
                                         </tbody>
                                     </table>
                                 </div>
@@ -588,7 +588,7 @@
                 </div>
                 <div class="border-t border-b border-gray-200 py-4 my-4">
                     <div class="space-y-2" id="receipt-items">
-                        <!-- Receipt items will be added here -->
+                        <!-- Dynamic -->
                     </div>
                 </div>
                 <div class="space-y-1 text-right">
@@ -801,6 +801,113 @@
         let syncInterval = null;
         let lastSyncTime = null;
 
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const registerModal = document.getElementById('register-modal');
+        const editProfileModal = document.getElementById('edit-profile-modal');
+        const paymentModal = document.getElementById('payment-modal');
+        const receiptModal = document.getElementById('receipt-modal');
+        const editProductModal = document.getElementById('edit-product-modal');
+        const userModal = document.getElementById('user-modal');
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+        const syncStatusModal = document.getElementById('sync-status-modal');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const settingsForm = document.getElementById('settings-form');
+        const editProfileForm = document.getElementById('edit-profile-form');
+        const paymentForm = document.getElementById('payment-form');
+        const editProductForm = document.getElementById('edit-product-form');
+        const userForm = document.getElementById('user-form');
+        const registerBtn = document.getElementById('register-btn');
+        const modalCloseButtons = document.querySelectorAll('.modal-close');
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdown = document.getElementById('user-dropdown');
+        const logoutButton = document.getElementById('logout-button');
+        const userInitial = document.getElementById('user-initial');
+        const toastContainer = document.getElementById('toast-container');
+        const usersTableBody = document.getElementById('users-table-body');
+        const syncEnabledCheckbox = document.getElementById('sync-enabled');
+        const lastSyncedElement = document.getElementById('last-synced');
+        const forceSyncBtn = document.getElementById('force-sync-btn');
+        const syncStatusMessage = document.getElementById('sync-status-message');
+
+        // Navigation elements
+        const navHome = document.getElementById('nav-home');
+        const navProfile = document.getElementById('nav-profile');
+        const navSettings = document.getElementById('nav-settings');
+        const navCashier = document.getElementById('nav-cashier');
+        const profileLink = document.getElementById('profile-link');
+        const settingsLink = document.getElementById('settings-link');
+
+        // Dashboard sections
+        const homeSection = document.getElementById('home-section');
+        const profileSection = document.getElementById('profile-section');
+        const settingsSection = document.getElementById('settings-section');
+        const analyticsSection = document.getElementById('analytics-section');
+        const usersSection = document.getElementById('users-section');
+        const cashierSection = document.getElementById('cashier-section');
+
+        // Dashboard cards
+        const analyticsCard = document.getElementById('analytics-card');
+        const usersCard = document.getElementById('users-card');
+        const settingsCard = document.getElementById('settings-card');
+        const cashierCard = document.getElementById('cashier-card');
+
+        // Buttons
+        const editProfileBtn = document.getElementById('edit-profile-btn');
+        const addUserBtn = document.getElementById('add-user-btn');
+        const exportAnalyticsBtn = document.getElementById('export-analytics-btn');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        const clearCartBtn = document.getElementById('clear-cart-btn');
+        const printReceiptBtn = document.getElementById('print-receipt-btn');
+        const addProductBtn = document.getElementById('add-product-btn');
+        const deleteProductBtn = document.getElementById('delete-product-btn');
+        const deleteUserBtn = document.getElementById('delete-user-btn');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const applyDiscountBtn = document.getElementById('apply-discount-btn');
+
+        // Cashier elements
+        const productGrid = document.getElementById('product-grid');
+        const cartItems = document.getElementById('cart-items');
+        const subtotalElement = document.getElementById('subtotal');
+        const discountInput = document.getElementById('discount-amount');
+        const totalElement = document.getElementById('total');
+        const productSearch = document.getElementById('product-search');
+        const cashReceived = document.getElementById('cash-received');
+        const changeAmount = document.getElementById('change-amount');
+        const paymentAmount = document.getElementById('payment-amount');
+        const paymentMethod = document.getElementById('payment-method');
+
+        // Sample users for demo
+        const defaultUsers = [
+            { id: '1', username: 'demo', password: 'password', email: 'demo@example.com', name: 'Demo User', role: 'Admin', status: 'Active', lastUpdated: Date.now() },
+            { id: '2', username: 'jane', password: 'password123', email: 'jane@example.com', name: 'Jane Smith', role: 'User', status: 'Active', lastUpdated: Date.now() }
+        ];
+
+        let users = [];
+
+        // Default products data
+        const defaultProducts = [
+            { id: '1', name: 'Coffee', price: 35000, icon: 'pencil', color: 'amber', lastUpdated: Date.now() },
+            { id: '2', name: 'Sandwich', price: 57500, icon: 'pen', color: 'green', lastUpdated: Date.now() },
+            { id: '3', name: 'Donut', price: 22500, icon: 'eraser', color: 'pink', lastUpdated: Date.now() },
+            { id: '4', name: 'Salad', price: 79500, icon: 'paperclip', color: 'green', lastUpdated: Date.now() },
+            { id: '5', name: 'Juice', price: 45000, icon: 'sticky-note', color: 'orange', lastUpdated: Date.now() },
+            { id: '6', name: 'Cake', price: 62500, icon: 'book', color: 'purple', lastUpdated: Date.now() }
+        ];
+
+        let products = [];
+        let cart = [];
+        let subtotal = 0;
+        let discount = 0;
+        let total = 0;
+
+        // Variables for delete confirmation
+        let deleteType = '';
+        let deleteId = '';
+        let deleteCallback = null;
+
         // Initialize Firebase
         function initializeFirebase() {
             if (firebaseInitialized) return;
@@ -829,45 +936,27 @@
                 type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
             }`;
             toast.textContent = message;
-            document.getElementById('toast-container').appendChild(toast);
+            toastContainer.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // DOM Elements
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-        const userMenuButton = document.getElementById('user-menu-button');
-        const userDropdown = document.getElementById('user-dropdown');
-        const logoutButton = document.getElementById('logout-button');
-        const registerBtn = document.getElementById('register-btn');
-        const modalCloseButtons = document.querySelectorAll('.modal-close');
-        const loginScreen = document.getElementById('login-screen');
-        const dashboardScreen = document.getElementById('dashboard-screen');
-        const userInitial = document.getElementById('user-initial');
-
-        // Sample data
-        const defaultUsers = [
-            { id: '1', username: 'demo', password: 'password', email: 'demo@example.com', name: 'Demo User', role: 'Admin', status: 'Active', lastUpdated: Date.now() }
-        ];
-        let users = [];
-
-        const defaultProducts = [
-            { id: '1', name: 'Coffee', price: 35000, icon: 'pencil', color: 'amber', lastUpdated: Date.now() },
-            { id: '2', name: 'Sandwich', price: 57500, icon: 'pen', color: 'green', lastUpdated: Date.now() }
-        ];
-        let products = [];
-
-        // Load data
+        // Load data from cloud
         async function loadDataFromCloud() {
-            await loadUsersFromCloud();
-            await loadProductsFromCloud();
-            renderUsers();
-            renderProducts();
-            lastSyncTime = Date.now();
-            updateLastSyncedTime();
-            showToast("Data loaded from cloud", "success");
+            try {
+                await loadUsersFromCloud();
+                await loadProductsFromCloud();
+                renderUsers();
+                renderProducts();
+                lastSyncTime = Date.now();
+                updateLastSyncedTime();
+                showToast("Data loaded from cloud", "success");
+            } catch (error) {
+                console.error("Error loading data from cloud:", error);
+                showToast("Error loading data from cloud", "error");
+            }
         }
 
+        // Load users from cloud
         async function loadUsersFromCloud() {
             if (!database) return;
             try {
@@ -879,11 +968,12 @@
             }
         }
 
+        // Save users to cloud
         async function saveUsersToCloud() {
             if (!database) return;
             try {
                 const usersObj = {};
-                users.forEach(u => usersObj[u.id] = u);
+                users.forEach(user => usersObj[user.id] = user);
                 await database.ref('users').set(usersObj);
                 console.log("✅ Users saved to Firebase");
             } catch (error) {
@@ -891,6 +981,7 @@
             }
         }
 
+        // Load products from cloud
         async function loadProductsFromCloud() {
             if (!database) return;
             try {
@@ -902,11 +993,12 @@
             }
         }
 
+        // Save products to cloud
         async function saveProductsToCloud() {
             if (!database) return;
             try {
                 const productsObj = {};
-                products.forEach(p => productsObj[p.id] = p);
+                products.forEach(product => productsObj[product.id] = product);
                 await database.ref('products').set(productsObj);
                 console.log("✅ Products saved to Firebase");
             } catch (error) {
@@ -914,43 +1006,80 @@
             }
         }
 
-        // Render functions
+        // Render users
         function renderUsers() {
-            const tbody = document.getElementById('users-table-body');
-            tbody.innerHTML = '';
+            usersTableBody.innerHTML = '';
             users.forEach(user => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
+                const row = document.createElement('tr');
+                row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap">${user.name}</td>
                     <td class="px-6 py-4 whitespace-nowrap">${user.email}</td>
                     <td class="px-6 py-4 whitespace-nowrap">${user.role}</td>
                     <td class="px-6 py-4 whitespace-nowrap">${user.status}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <button class="text-blue-600 edit-user-btn" data-id="${user.id}">Edit</button>
+                        <button class="text-red-600 delete-user-btn" data-id="${user.id}">Delete</button>
                     </td>
                 `;
-                tbody.appendChild(tr);
+                usersTableBody.appendChild(row);
             });
         }
 
+        // Render products
         function renderProducts() {
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = '';
-            products.forEach(p => {
+            productGrid.innerHTML = '';
+            products.forEach(product => {
                 const div = document.createElement('div');
-                div.className = 'bg-white p-4 rounded-lg shadow text-center';
-                div.innerHTML = `<h5>${p.name}</h5><p>${formatCurrency(p.price)}</p>`;
-                div.onclick = () => addToCart(p);
-                grid.appendChild(div);
+                div.className = 'bg-white p-4 rounded-lg shadow text-center cursor-pointer';
+                div.innerHTML = `<h5>${product.name}</h5><p>${formatCurrency(product.price)}</p>`;
+                div.onclick = () => addToCart(product);
+                productGrid.appendChild(div);
             });
         }
 
+        // Add to cart
         function addToCart(product) {
-            const cartItem = cart.find(item => item.id === product.id);
-            if (cartItem) cartItem.quantity += 1;
+            const existing = cart.find(item => item.id === product.id);
+            if (existing) existing.quantity++;
             else cart.push({ ...product, quantity: 1 });
             updateCart();
             showToast(`Added ${product.name}`);
+        }
+
+        // Update cart
+        function updateCart() {
+            cartItems.innerHTML = '';
+            subtotal = 0;
+            if (cart.length === 0) {
+                cartItems.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">Cart is empty</td></tr>`;
+                subtotal = 0;
+                discount = 0;
+                total = 0;
+                updateTotals();
+                return;
+            }
+            cart.forEach((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-4 py-2 whitespace-nowrap">${item.name}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-center">${item.quantity}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">${formatCurrency(itemTotal)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                        <button class="text-red-600 remove-item-btn" data-index="${index}">Remove</button>
+                    </td>
+                `;
+                cartItems.appendChild(row);
+            });
+            updateTotals();
+        }
+
+        // Update totals
+        function updateTotals() {
+            total = subtotal - discount;
+            subtotalElement.textContent = formatCurrency(subtotal);
+            totalElement.textContent = formatCurrency(total);
         }
 
         // Event Listeners
@@ -977,11 +1106,25 @@
                 const username = document.getElementById('reg-username').value;
                 const email = document.getElementById('reg-email').value;
                 const password = document.getElementById('reg-password').value;
+                const confirmPassword = document.getElementById('reg-confirm-password').value;
+                if (password !== confirmPassword) {
+                    showToast('Passwords do not match', 'error');
+                    return;
+                }
                 if (users.some(u => u.username === username)) {
                     showToast('Username exists', 'error');
                     return;
                 }
-                const newUser = { id: Date.now().toString(), username, password, email, name: username, role: 'User', status: 'Active' };
+                const newUser = {
+                    id: Date.now().toString(),
+                    username,
+                    password,
+                    email,
+                    name: username,
+                    role: 'User',
+                    status: 'Active',
+                    lastUpdated: Date.now()
+                };
                 users.push(newUser);
                 saveUsersToCloud();
                 localStorage.setItem('currentUser', JSON.stringify(newUser));
@@ -989,13 +1132,95 @@
                 showToast('Registered!', 'success');
             });
 
-            // More event listeners...
+            // Close modals
+            modalCloseButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    [registerModal, editProfileModal, paymentModal, receiptModal, editProductModal, userModal, deleteConfirmModal, syncStatusModal].forEach(m => m.classList.add('hidden'));
+                });
+            });
+
+            // Show/hide dropdown
+            userMenuButton.addEventListener('click', () => userDropdown.classList.toggle('hidden'));
+            document.addEventListener('click', (e) => {
+                if (!userMenuButton.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('currentUser');
+                dashboardScreen.classList.add('hidden');
+                loginScreen.classList.remove('hidden');
+                showToast('Logged out', 'info');
+            });
+
+            // Navigation
+            navHome.addEventListener('click', e => { e.preventDefault(); showSection(homeSection); setActiveNav(navHome); });
+            navProfile.addEventListener('click', e => { e.preventDefault(); showSection(profileSection); setActiveNav(navProfile); });
+            navSettings.addEventListener('click', e => { e.preventDefault(); showSection(settingsSection); setActiveNav(navSettings); });
+            navCashier.addEventListener('click', e => { e.preventDefault(); showSection(cashierSection); setActiveNav(navCashier); });
+
+            // Dashboard cards
+            analyticsCard.addEventListener('click', () => showSection(analyticsSection));
+            usersCard.addEventListener('click', () => showSection(usersSection));
+            settingsCard.addEventListener('click', () => showSection(settingsSection));
+            cashierCard.addEventListener('click', () => showSection(cashierSection));
+
+            editProfileBtn.addEventListener('click', () => {
+                const user = JSON.parse(localStorage.getItem('currentUser'));
+                document.getElementById('edit-name').value = user.name || '';
+                document.getElementById('edit-email').value = user.email || '';
+                editProfileModal.classList.remove('hidden');
+            });
+
+            editProfileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('edit-name').value;
+                const email = document.getElementById('edit-email').value;
+                const password = document.getElementById('edit-password').value;
+                const user = JSON.parse(localStorage.getItem('currentUser'));
+                user.name = name;
+                user.email = email;
+                if (password) user.password = password;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                document.getElementById('profile-name').textContent = name;
+                document.getElementById('profile-email').textContent = email;
+                userInitial.textContent = name.charAt(0).toUpperCase();
+                editProfileModal.classList.add('hidden');
+                showToast('Profile updated', 'success');
+            });
+
+            registerBtn.addEventListener('click', () => registerModal.classList.remove('hidden'));
         });
 
+        // Show dashboard
         function showDashboard(user) {
             loginScreen.classList.add('hidden');
             dashboardScreen.classList.remove('hidden');
-            userInitial.textContent = user.name.charAt(0).toUpperCase();
+            userInitial.textContent = (user.name || user.username).charAt(0).toUpperCase();
+            document.getElementById('profile-name').textContent = user.name || user.username;
+            document.getElementById('profile-username').textContent = user.username;
+            document.getElementById('profile-email').textContent = user.email;
+            showSection(homeSection);
+            setActiveNav(navHome);
+        }
+
+        // Show section
+        function showSection(section) {
+            [homeSection, profileSection, settingsSection, analyticsSection, usersSection, cashierSection].forEach(s => s.classList.add('hidden'));
+            section.classList.remove('hidden');
+        }
+
+        // Set active nav
+        function setActiveNav(nav) {
+            [navHome, navProfile, navSettings, navCashier].forEach(n => {
+                n.classList.remove('border-blue-500', 'text-gray-900');
+                n.classList.add('border-transparent', 'text-gray-500');
+            });
+            if (nav) {
+                nav.classList.remove('border-transparent', 'text-gray-500');
+                nav.classList.add('border-blue-500', 'text-gray-900');
+            }
         }
     </script>
 </body>
